@@ -1,0 +1,30 @@
+[tool.poetry]
+name = "tablecloth"
+version = "0.1.0"
+description = "Generate spreadsheet templates from dataset descriptions."
+authors = ["ezwelty <ethan.welty@gmail.com>"]
+license = "MIT"
+readme = "README.md"
+homepage = "https://github.com/ezwelty/tablecloth"
+repository = "https://github.com/ezwelty/tablecloth"
+
+[tool.poetry.urls]
+Changelog = "https://github.com/ezwelty/tablecloth/releases"
+
+[tool.poetry.dependencies]
+python = "^3.9"
+XlsxWriter = {version = "^3.0.8", optional = true}
+
+[tool.poetry.extras]
+excel = ["XlsxWriter"]
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.2.1"
+PyYAML = "^6.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.pytest.ini_options]
+doctest_optionflags = ["NORMALIZE_WHITESPACE", "ELLIPSIS"]
