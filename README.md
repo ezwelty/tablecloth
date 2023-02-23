@@ -6,8 +6,11 @@ Generate spreadsheet templates for data entry based on metadata.
 ## Installation
 
 ```sh
-pip install git+https://github.com/ezwelty/tablecloth
+pip install "tablecloth[excel] @ git+https://github.com/ezwelty/tablecloth"
 ```
+
+The `[excel]` adds (optional) support for Microsoft Excel templates.
+Optional support for Google Sheets should follow shortly.
 
 ## Example
 
