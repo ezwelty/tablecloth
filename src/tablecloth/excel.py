@@ -222,6 +222,14 @@ def write_package_template(
           foreign_keys=foreign_keys.get(column)
         )
         validation = helpers.build_column_validation(checks)
+        if validation:
+          validation = {
+            "validate": 'custom',
+            'value': validation['formula'],
+            "error_title": "Invalid value",
+            "error_message": validation['message'],
+            "ignore_blank": validation['ignore_blank'],
+          }
       if validation:
         cells = layout.get_column_range(table, column)
         sheet.data_validation(cells, validation)
