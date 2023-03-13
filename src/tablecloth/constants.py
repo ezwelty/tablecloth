@@ -121,8 +121,8 @@ CONSTRAINTS: Dict[str, CheckTemplate] = {
         "ignore_blank": True,
     },
     "pattern": {
-        "valid": 'REGEXMATCH(TO_TEXT({col}2), "^{value}$")',
-        "invalid": 'NOT(REGEXMATCH(TO_TEXT({col}2), "^{value}$"))',
+        "valid": 'REGEXMATCH(TO_TEXT({col}{row}), "^{value}$")',
+        "invalid": 'NOT(REGEXMATCH(TO_TEXT({col}{row}), "^{value}$"))',
         "message": "match pattern {value}",
         "ignore_blank": True
     },
