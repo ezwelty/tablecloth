@@ -277,20 +277,19 @@ class Layout:
         })
 
     # Range lookups
-    search = self.get_column_range(table, column, nrows=1)
     check = constants.IN_RANGE
     # enum
     if enum:
-      lookup = self.get_enum_range(enum)
+      enum_range = self.get_enum_range(enum)
       checks.append({
-        'formula': check[f].format(search=search, lookup=lookup),
-        'message': check['message'].format(lookup=lookup),
+        'formula': check[f].format(**defaults, range=enum_range),
+        'message': check['message'].format(range=enum_range),
         'ignore_blank': check['ignore_blank']
       })
     # foreign keys
     for foreign_table, foreign_column in (foreign_keys or []):
       foreign_table = foreign_table or table
-      lookup = self.get_column_range(
+      column_range = self.get_column_range(
         foreign_table,
         foreign_column,
         absolute=foreign_table != table,
@@ -298,8 +297,8 @@ class Layout:
         indirect=self.indirect
       )
       checks.append({
-          'formula': check[f].format(search=search, lookup=lookup),
-          'message': check['message'].format(lookup=lookup),
+          'formula': check[f].format(**defaults, range=column_range),
+          'message': check['message'].format(range=column_range),
           'ignore_blank': check['ignore_blank']
       })
     return checks

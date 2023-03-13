@@ -141,16 +141,17 @@ Formula templates for (in)valid constraint checks.
 
 
 IN_RANGE: CheckTemplate = {
-    "valid": "ISNUMBER(MATCH({search}, {lookup}, 0))",
-    "invalid": "ISNA(MATCH({search}, {lookup}, 0))",
-    "message": "not in list ({lookup})",
+    "valid": "ISNUMBER(MATCH({col}{row}, {range}, 0))",
+    "invalid": "ISNA(MATCH({col}{row}, {range}, 0))",
+    "message": "not in list ({range})",
     "ignore_blank": True
 }
 """
 Formula templates to check whether a value is in a range.
 
-* search: Cell (or value) to search for.
-* lookup: Cell range (or value array) to look in.
+* col: Column code.
+* row: First (minimum) row number.
+* range: Cell range to look in.
 """
 
 
