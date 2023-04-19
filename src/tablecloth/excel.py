@@ -186,14 +186,11 @@ def write_package_template(
       # Register enum
       if enum and (dropdowns or error_type or format_invalid):
         layout.set_enum(enum)
-        write_enum(
-          sheet=(
-            book.get_worksheet_by_name(enum_sheet) or
-            book.add_worksheet(enum_sheet)
-          ),
-          values=enum,
-          col=layout.get_enum(enum)['col']
-        )
+        esheet = book.get_worksheet_by_name(enum_sheet)
+        if not esheet:
+          esheet = book.add_worksheet(enum_sheet)
+          esheet.protect()
+        write_enum(sheet=esheet, values=enum, col=layout.get_enum(enum)['col'])
 
       # Data validation
       validation = None
