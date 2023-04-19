@@ -91,7 +91,10 @@ def write_enum(
         Column to write values to (zero-indexed).
     """
     for i, value in enumerate(values):
-      sheet.write_row(i, col, value)
+      if isinstance(value, str):
+        sheet.write_string(i, col, value)
+      else:
+        sheet.write(i, col, value)
 
 
 def write_package_template(
