@@ -209,7 +209,14 @@ def write_package_template(
         elif enum:
           values = layout.get_enum_range(enum)
         if values:
-          validation = {'validate': 'list', 'value': values}
+          validation = {
+            'validate': 'list',
+            'value': values,
+            "error_title": 'Invalid value',
+            "error_message": 'Value must be in dropdown list',
+            "ignore_blank": True,
+            "show_error": data_validation
+          }
       if not validation and data_validation:
         # Get column checks
         checks = layout.gather_column_checks(
