@@ -1,4 +1,6 @@
+import re
 from typing import List, Literal, Tuple, Union
+import warnings
 
 from . import constants
 from . import helpers
@@ -80,6 +82,13 @@ class Layout:
 
   def set_enum(self, values: list) -> None:
     """Add an enum (if new) to the enum sheet."""
+    formulas = [
+      x for x in values
+      if isinstance(x, str) and re.match(r"^[+=']", x)
+    ]
+    warnings.warn(
+      f"Enum values start with +, =, or ' {formulas}. Expect unexpected behavior..."
+    )
     if values in [x['values'] for x in self.enums]:
       return
     col = max([0, *[x['col'] for x in self.enums]])
