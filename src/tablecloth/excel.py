@@ -1,6 +1,6 @@
 from collections import defaultdict
 from pathlib import Path
-from typing import Dict, List, Optional, Union
+from typing import Dict, List, Literal, Optional, Union
 try:
     import xlsxwriter
     import xlsxwriter.format
@@ -101,7 +101,7 @@ def write_package_template(
   hide_enum_sheet: bool = True,
   header_comments: Dict[str, List[str]] = None,
   dropdowns: bool = True,
-  data_validation: bool = False,
+  error_type: Literal['stop', 'warning', 'information'] = None,
   format_invalid: Optional[dict] = {'bg_color': '#ffc7ce'},
   format_header: Optional[dict] = {'bold': True, 'bg_color': '#d3d3d3'},
   format_comments: Optional[dict] = {'font_size': 11, 'x_scale': 2, 'y_scale': 2},
@@ -113,6 +113,10 @@ def write_package_template(
 
   Parameters
   ----------
+  error_type
+    * stop: Display error message with buttons to cancel or retry
+    * warning: Display error message with buttons to accept or retry
+    * information: Display error message with button to accept
   """
   # ---- Initialize
   layout = Layout(
@@ -177,7 +181,7 @@ def write_package_template(
       }
 
       # Register enum
-      if enum and (dropdowns or data_validation or format_invalid):
+      if enum and (dropdowns or error_type or format_invalid):
         layout.set_enum(enum)
         write_enum(
           sheet=(
@@ -215,9 +219,10 @@ def write_package_template(
             "error_title": 'Invalid value',
             "error_message": 'Value must be in dropdown list',
             "ignore_blank": True,
-            "show_error": data_validation
+            "error_type": error_type or 'information',
+            "show_error": bool(error_type)
           }
-      if not validation and data_validation:
+      if not validation and error_type:
         # Get column checks
         checks = layout.gather_column_checks(
           table,
@@ -236,6 +241,8 @@ def write_package_template(
             "error_title": "Invalid value",
             "error_message": validation['message'],
             "ignore_blank": validation['ignore_blank'],
+            "error_type": error_type,
+            "show_error": bool(error_type)
           }
       if validation:
         cells = layout.get_column_range(table, column)
