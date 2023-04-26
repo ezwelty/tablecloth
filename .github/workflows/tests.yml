@@ -19,7 +19,7 @@ jobs:
           cache: 'poetry'
           architecture: x64
       - run: poetry env use ${{ matrix.python-version }}
-      - run: poetry install --no-interaction
+      - run: poetry install --all-extras --no-interaction
       - name: Run tests
         if: env.coverage == 'false'
         run: poetry run pytest --doctest-modules src tests
