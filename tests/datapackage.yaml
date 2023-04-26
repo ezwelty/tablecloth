@@ -63,6 +63,6 @@ resources:
         - name: main_id
           description: Any value in main.id
           type: integer
-        - name: main_integer_minmax
+        - name: main_string_enum
           description: Any value in main.string_enum
           type: string
