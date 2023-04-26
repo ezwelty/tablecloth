@@ -73,7 +73,7 @@ comments = {
 }
 
 # Build Excel template
-tablecloth.excel.write_package_template(
+tablecloth.excel.write_template(
   package, path='template.xlsx', header_comments=comments
 )
 ```

@@ -1,0 +1,68 @@
+name: package
+resources:
+  - name: main
+    schema:
+      fields:
+        - name: id
+          description: Any positive integer
+          type: integer
+          constraints:
+            required: true
+            unique: true
+            minimum: 1
+        - name: integer_minmax
+          description: An integer between 1 and 3
+          type: integer
+          constraints:
+            minimum: 1
+            maximum: 3
+        - name: number_minmax
+          description: Any number between 1 and 3
+          type: number
+          constraints:
+            minimum: 1
+            maximum: 3
+        - name: boolean
+          description: Any boolean
+          type: boolean
+        - name: string_minmax
+          description: Any string with length between 1 and 3
+          type: string
+          constraints:
+            minLength: 1
+            maxLength: 3
+        - name: string_enum
+          description: One of the first three letters of the alphabet
+          type: string
+          constraints:
+            enum: ['a', 'b', 'c']
+        - name: string_pattern
+          description: One of the first three letters of the alphabet
+          type: string
+          constraints:
+            pattern: '[a-c]'
+  - name: fkey-simple
+    schema:
+      foreignKeys:
+        - fields: ['main_id']
+          reference:
+            resource: main
+            fields: ['id']
+      fields:
+        - name: main_id
+          description: Any value in main.id
+          type: integer
+  - name: fkey-composite
+    schema:
+      foreignKeys:
+        - fields: ['main_id', 'main_string_enum']
+          reference:
+            resource: main
+            fields: ['id', 'string_enum']
+      fields:
+        - name: main_id
+          description: Any value in main.id
+          type: integer
+        - name: main_integer_minmax
+          description: Any value in main.string_enum
+          type: string

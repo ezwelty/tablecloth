@@ -97,14 +97,14 @@ def write_enum(
         sheet.write(i, col, value)
 
 
-def write_package_template(
+def write_template(
   package: dict,
   path: Union[str, Path] = None,
   enum_sheet: str = 'lists',
   hide_enum_sheet: bool = True,
   header_comments: Dict[str, List[str]] = None,
   dropdowns: bool = True,
-  error_type: Literal['stop', 'warning', 'information'] = None,
+  error_type: Literal['information', 'warning', 'stop'] = None,
   format_invalid: Optional[dict] = {'bg_color': '#ffc7ce'},
   format_header: Optional[dict] = {'bold': True, 'bg_color': '#d3d3d3'},
   format_comments: Optional[dict] = {'font_size': 11, 'x_scale': 2, 'y_scale': 2},
