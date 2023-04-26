@@ -1,5 +1,12 @@
 name: tests
-on: push
+on:
+  push:
+    paths-ignore:
+      - README.md
+      - .flake8
+      - .gitignore
+      - .pre-commit-config.yaml
+      - LICENSE.md
 jobs:
   tests:
     strategy:
