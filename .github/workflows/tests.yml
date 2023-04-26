@@ -20,10 +20,10 @@ jobs:
           architecture: x64
       - name: Configure poetry
         if: matrix.os != 'windows-latest'
-        run: poetry env use $(py ${{ matrix.python-version }} -c 'import sys; print(sys.executable)')
+        run: poetry env use ${{ matrix.python-version }}
       - name: Configure poetry (Windows)
         if: matrix.os == 'windows-latest'
-        run: poetry env use ${{ matrix.python-version }}
+        run: poetry env use $(py ${{ matrix.python-version }} -c 'import sys; print(sys.executable)')
       - run: poetry install --all-extras --no-interaction
       - name: Run tests
         if: env.coverage == 'false'
