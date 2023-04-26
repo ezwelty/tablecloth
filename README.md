@@ -1,6 +1,9 @@
 `tablecloth`
 ============
 
+[![codecov](https://codecov.io/gh/ezwelty/tablecloth/branch/main/graph/badge.svg?token=RP9E7WLFCI)](https://codecov.io/gh/ezwelty/tablecloth)
+![tests](https://github.com/ezwelty/tablecloth/actions/workflows/tests.yaml/badge.svg)
+
 Generate spreadsheet templates for data entry based on metadata.
 
 ## Installation
