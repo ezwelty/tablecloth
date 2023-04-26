@@ -6,7 +6,7 @@ try:
     import xlsxwriter.format
     import xlsxwriter.worksheet
 except ImportError:
-    raise ImportError("Writing Excel templates requires `xlsxwriter`")
+    raise ImportError('Writing Excel templates requires `xlsxwriter`')
 
 from . import constants
 from . import helpers
@@ -61,7 +61,7 @@ def write_table(
     sheet.write_row(0, 0, header, format_header)
     # Hide unused columns
     if hide_columns and not comment_header:
-        sheet.set_column(len(header), MAX_COLS - 1, options={"hidden": 1})
+        sheet.set_column(len(header), MAX_COLS - 1, options={'hidden': 1})
     # Freeze header
     if freeze_header:
         sheet.freeze_panes(1, 0)
@@ -216,11 +216,11 @@ def write_template(
           validation = {
             'validate': 'list',
             'value': values,
-            "error_title": 'Invalid value',
-            "error_message": 'Value must be in dropdown list',
-            "ignore_blank": True,
-            "error_type": error_type or 'information',
-            "show_error": bool(error_type)
+            'error_title': 'Invalid value',
+            'error_message': 'Value must be in dropdown list',
+            'ignore_blank': True,
+            'error_type': error_type or 'information',
+            'show_error': bool(error_type)
           }
       if not validation and error_type:
         # Get column checks
@@ -236,13 +236,13 @@ def write_template(
         validation = helpers.build_column_validation(checks)
         if validation:
           validation = {
-            "validate": 'custom',
+            'validate': 'custom',
             'value': validation['formula'],
-            "error_title": "Invalid value",
-            "error_message": validation['message'],
-            "ignore_blank": validation['ignore_blank'],
-            "error_type": error_type,
-            "show_error": bool(error_type)
+            'error_title': 'Invalid value',
+            'error_message': validation['message'],
+            'ignore_blank': validation['ignore_blank'],
+            'error_type': error_type,
+            'show_error': bool(error_type)
           }
       if validation:
         cells = layout.get_column_range(table, column)
@@ -265,9 +265,9 @@ def write_template(
               col=layout.get_column_code(table, column), row=2
             )
             sheet.conditional_format(cells, {
-              "type": "formula",
+              'type': 'formula',
               # NOTE: Move string formatting elsewhere?
-              "criteria": formula,
+              'criteria': formula,
               'format': format_invalid
             })
   if hide_enum_sheet:

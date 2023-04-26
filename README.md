@@ -77,4 +77,3 @@ tablecloth.excel.write_template(
   package, path='template.xlsx', header_comments=comments
 )
 ```
-

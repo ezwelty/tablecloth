@@ -66,7 +66,7 @@ def column_index_to_code(i: int) -> str:
   while i:
     i, remainder = divmod(i - 1, 26)
     letters[:0] = constants.LETTERS[remainder]
-  return "".join(letters)
+  return ''.join(letters)
 
 
 def column_code_to_index(code: str) -> int:
@@ -87,7 +87,7 @@ def column_code_to_index(code: str) -> int:
     """
     # https://gist.github.com/dbspringer/643254008e6784aa749e#file-col2num-py
     function = lambda x, y: x * 26 + y
-    return functools.reduce(function, [ord(c) - ord("A") + 1 for c in code]) - 1
+    return functools.reduce(function, [ord(c) - ord('A') + 1 for c in code]) - 1
 
 
 def row_index_to_code(i: int) -> int:
@@ -182,13 +182,13 @@ def format_value(x: Union[bool, int, float, str, None]) -> str:
     if isinstance(x, str):
         return f'"{x}"'
     if x is None:
-        return ""
-    raise ValueError(f"Unexpected value {x} of type {type(x)}")
+        return ''
+    raise ValueError(f'Unexpected value {x} of type {type(x)}')
 
 
 def merge_formulas(
     formulas: List[str],
-    operator: Literal["AND", "OR"]
+    operator: Literal['AND', 'OR']
 ) -> str:
     """
     Merge formulas (returning TRUE or FALSE) by a logical operator.
@@ -205,7 +205,7 @@ def merge_formulas(
     'OR(A2 > 0, A2 < 3)'
     """
     if not formulas:
-        return ""
+        return ''
     if len(formulas) == 1:
         return formulas[0]
     return f"{operator}({', '.join(formulas)})"
@@ -276,7 +276,7 @@ def merge_conditions(
         # Wrap formulas ignoring blank in single if statement
         merged = merge_formulas(fs_ignore, operator=operator)
         fs.append(
-            f"IF(ISBLANK({{col}}{{row}}), {format_value(valid)}, {merged})"
+            f'IF(ISBLANK({{col}}{{row}}), {format_value(valid)}, {merged})'
         )
     return merge_formulas(fs, operator=operator)
 

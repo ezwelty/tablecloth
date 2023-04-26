@@ -67,7 +67,7 @@ class Layout:
         raise ValueError(f"Sheet '{sheet}' already exists")
     if self.max_name_length and len(sheet) > self.max_name_length:
         raise ValueError(
-          f"Sheet name cannot be longer than {self.max_name_length}"
+          f'Sheet name cannot be longer than {self.max_name_length}'
         )
     if len(columns) != len(set(columns)):
         raise ValueError(f'Columns {columns} are not unique')
@@ -104,7 +104,7 @@ class Layout:
     for x in self.enums:
       if x['values'] == values:
         return x
-    raise KeyError(f"Enum with values {values} not found")
+    raise KeyError(f'Enum with values {values} not found')
 
   def get_enum_range(self, values: list) -> str:
     """Get an enum's cell range."""
@@ -255,7 +255,7 @@ class Layout:
       'max_row': f'${self.max_rows}',
       'ncols': len(columns)
     }
-    f: Literal["valid", "invalid"] = "valid" if valid else "invalid"
+    f: Literal['valid', 'invalid'] = 'valid' if valid else 'invalid'
     checks = []
 
     # Field type
