@@ -85,8 +85,11 @@ def column_code_to_index(code: str) -> int:
     >>> code == column_index_to_code(column_code_to_index(code))
     True
     """
+
     # https://gist.github.com/dbspringer/643254008e6784aa749e#file-col2num-py
-    function = lambda x, y: x * 26 + y
+    def function(x: int, y: int) -> int:
+        return x * 26 + y
+
     return functools.reduce(function, [ord(c) - ord('A') + 1 for c in code]) - 1
 
 

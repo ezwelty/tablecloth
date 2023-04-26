@@ -86,7 +86,10 @@ Formula templates for (in)valid type checks.
 CONSTRAINTS: Dict[str, CheckTemplate] = {
     'required': {
         'valid': 'NOT(ISBLANK({col}{row}))',
-        'invalid': 'AND(ISBLANK({col}{row}), COUNTBLANK(${min_col}{row}:${max_col}{row}) <> {ncols})',
+        'invalid': (
+            'AND(ISBLANK({col}{row}), '
+            'COUNTBLANK(${min_col}{row}:${max_col}{row}) <> {ncols})'
+        ),
         'message': 'not blank',
         'ignore_blank': False,
     },

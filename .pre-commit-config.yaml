@@ -20,8 +20,13 @@ repos:
       entry: poetry run isort src tests
       language: system
       types: [python]
-    - id: format
+    - id: format-black
       name: black
       entry: poetry run black --skip-string-normalization src tests
+      language: system
+      types: [python]
+    - id: lint
+      name: flake8
+      entry: poetry run flake8 src tests
       language: system
       types: [python]

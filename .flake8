@@ -1,0 +1,6 @@
+[flake8]
+max-line-length = 88
+# ANN101: Missing type annotation for self in method
+# ANN401: Dynamically typed expressions (typing.Any) are disallowed
+# W503 line break before binary operator
+ignore = ANN101, ANN401, W503

@@ -173,9 +173,8 @@ def write_template(
                 for k, v in field.get('constraints', {}).items()
                 if (
                     helpers.camel_to_snake_case(k) in constants.CONSTRAINTS
-                    and
                     # No regex support in Excel
-                    k not in ['pattern']
+                    and k not in ['pattern']
                 )
             }
 
