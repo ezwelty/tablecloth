@@ -2,3 +2,7 @@ __pycache__
 .hypothesis
 .pytest_cache
 .vscode
+.DS_Store
+
+# tablecloth
+tests/xlsx/*-test.xlsx
