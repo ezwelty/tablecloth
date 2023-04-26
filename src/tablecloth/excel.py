@@ -160,12 +160,12 @@ def write_template(
     foreign_keys = defaultdict(list)
     for key in resource['schema'].get('foreignKeys', []):
       fields = helpers.to_list(key['fields'])
-      if len(fields) == 1:
-        # Only simple foreign keys are supported
-        foreign_keys[fields[0]].append((
-          key['reference']['resource'] or table,
-          helpers.to_list(key['reference']['fields'])[0]
-        ))
+      ref_fields = helpers.to_list(key['reference']['fields'])
+      # Composite keys are treated as multiple simple keys
+      for field, ref_field in zip(fields, ref_fields):
+        foreign_keys[field].append(
+          (key['reference']['resource'] or table, ref_field)
+        )
 
     # For each column
     for field in resource['schema']['fields']:
