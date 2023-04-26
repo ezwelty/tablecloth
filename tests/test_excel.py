@@ -12,7 +12,7 @@ import tablecloth
 def write_indempotent_template(path: Union[str, Path], **kwargs: Any) -> None:
     # Load package descriptor
     package_path = Path(__file__).parent / 'datapackage.yaml'
-    package = yaml.safe_load(package_path.read_text())
+    package = yaml.safe_load(package_path.read_text(encoding='utf-8'))
     # Build header comments
     comments = {
         resource['name']: [
@@ -36,7 +36,7 @@ def read_xlsx_as_string(path: Union[str, Path]) -> str:
             else:
                 text += f'##### {path.at} #####\n\n'
                 # Cheap pretty print
-                text += path.read_text().replace('><', '>\n<')
+                text += path.read_text(encoding='utf-8').replace('><', '>\n<')
                 text += '\n\n'
         return text
 
