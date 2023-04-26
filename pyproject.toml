@@ -14,6 +14,7 @@ Changelog = "https://github.com/ezwelty/tablecloth/releases"
 [tool.poetry.dependencies]
 python = "^3.9"
 XlsxWriter = {version = "^3.0.8", optional = true}
+black = "^23.3.0"
 
 [tool.poetry.extras]
 excel = ["XlsxWriter"]

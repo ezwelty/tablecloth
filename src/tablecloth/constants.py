@@ -50,30 +50,30 @@ LETTERS: str = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
 
 
 TYPES: Dict[str, CheckTemplate] = {
-  'number': {
-      'valid': 'ISNUMBER({col}{row})',
-      'invalid': 'NOT(ISNUMBER({col}{row}))',
-      'message': 'number',
-      'ignore_blank': True
-  },
-  'integer': {
-      'valid': 'IF(ISNUMBER({col}{row}), INT({col}{row}) = {col}{row}, FALSE)',
-      'invalid': 'IF(ISNUMBER({col}{row}), INT({col}{row}) <> {col}{row}, TRUE)',
-      'message': 'integer',
-      'ignore_blank': True
-  },
-  'year': {
-      'valid': 'IF(ISNUMBER({col}{row}), INT({col}{row}) = {col}{row}, FALSE)',
-      'invalid': 'IF(ISNUMBER({col}{row}), INT({col}{row}) <> {col}{row}, TRUE)',
-      'message': 'year',
-      'ignore_blank': True
-  },
-  'boolean': {
-      'valid': 'OR({col}{row} = TRUE, {col}{row} = FALSE)',
-      'invalid': 'AND({col}{row} <> TRUE, {col}{row} <> FALSE)',
-      'message': 'TRUE or FALSE',
-      'ignore_blank': True
-  }
+    'number': {
+        'valid': 'ISNUMBER({col}{row})',
+        'invalid': 'NOT(ISNUMBER({col}{row}))',
+        'message': 'number',
+        'ignore_blank': True,
+    },
+    'integer': {
+        'valid': 'IF(ISNUMBER({col}{row}), INT({col}{row}) = {col}{row}, FALSE)',
+        'invalid': 'IF(ISNUMBER({col}{row}), INT({col}{row}) <> {col}{row}, TRUE)',
+        'message': 'integer',
+        'ignore_blank': True,
+    },
+    'year': {
+        'valid': 'IF(ISNUMBER({col}{row}), INT({col}{row}) = {col}{row}, FALSE)',
+        'invalid': 'IF(ISNUMBER({col}{row}), INT({col}{row}) <> {col}{row}, TRUE)',
+        'message': 'year',
+        'ignore_blank': True,
+    },
+    'boolean': {
+        'valid': 'OR({col}{row} = TRUE, {col}{row} = FALSE)',
+        'invalid': 'AND({col}{row} <> TRUE, {col}{row} <> FALSE)',
+        'message': 'TRUE or FALSE',
+        'ignore_blank': True,
+    },
 }
 """
 Formula templates for (in)valid type checks.
@@ -124,7 +124,7 @@ CONSTRAINTS: Dict[str, CheckTemplate] = {
         'valid': 'REGEXMATCH(TO_TEXT({col}{row}), "^{value}$")',
         'invalid': 'NOT(REGEXMATCH(TO_TEXT({col}{row}), "^{value}$"))',
         'message': 'match pattern {value}',
-        'ignore_blank': True
+        'ignore_blank': True,
     },
 }
 """
@@ -144,7 +144,7 @@ IN_RANGE: CheckTemplate = {
     'valid': 'ISNUMBER(MATCH({col}{row}, {range}, 0))',
     'invalid': 'ISNA(MATCH({col}{row}, {range}, 0))',
     'message': 'not in list ({range})',
-    'ignore_blank': True
+    'ignore_blank': True,
 }
 """
 Formula templates to check whether a value is in a range.
@@ -156,5 +156,5 @@ Formula templates to check whether a value is in a range.
 
 
 def JOIN_CHECK_MESSAGES(messages: List[str]) -> str:
-  """Join check messages into an error message for formula validation."""
-  return 'Value must be:\n' + '\n'.join(messages)
+    """Join check messages into an error message for formula validation."""
+    return 'Value must be:\n' + '\n'.join(messages)

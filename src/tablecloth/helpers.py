@@ -7,6 +7,7 @@ from . import constants
 
 # ---- Functions ----
 
+
 def camel_to_snake_case(x: str) -> str:
     """
     Convert camelCase (and CamelCase) to snake_case.
@@ -46,27 +47,27 @@ def to_list(x: Optional[Union[str, list]]) -> list:
 
 
 def column_index_to_code(i: int) -> str:
-  """
-  Convert a column index to a spreadsheet column code.
+    """
+    Convert a column index to a spreadsheet column code.
 
-  Examples
-  --------
-  >>> column_index_to_code(0)
-  'A'
-  >>> column_index_to_code(26)
-  'AA'
-  >>> column_index_to_code(16383)
-  'XFD'
-  >>> i = 1
-  >>> i == column_code_to_index(column_index_to_code(i))
-  True
-  """
-  letters: List[str] = []
-  i = i + 1
-  while i:
-    i, remainder = divmod(i - 1, 26)
-    letters[:0] = constants.LETTERS[remainder]
-  return ''.join(letters)
+    Examples
+    --------
+    >>> column_index_to_code(0)
+    'A'
+    >>> column_index_to_code(26)
+    'AA'
+    >>> column_index_to_code(16383)
+    'XFD'
+    >>> i = 1
+    >>> i == column_code_to_index(column_index_to_code(i))
+    True
+    """
+    letters: List[str] = []
+    i = i + 1
+    while i:
+        i, remainder = divmod(i - 1, 26)
+        letters[:0] = constants.LETTERS[remainder]
+    return ''.join(letters)
 
 
 def column_code_to_index(code: str) -> int:
@@ -121,43 +122,39 @@ def row_code_to_index(code: int) -> int:
 
 
 def column_to_range(
-  col: int,
-  row: int,
-  nrows: int = None,
-  fixed: bool = False,
-  sheet: str = None
+    col: int, row: int, nrows: int = None, fixed: bool = False, sheet: str = None
 ) -> str:
-  """
-  Examples
-  --------
-  >>> column_to_range(0, 1, nrows=1)
-  'A2'
-  >>> column_to_range(0, 1, nrows=1, fixed=True)
-  '$A$2'
-  >>> column_to_range(0, 1)
-  'A2:A'
-  >>> column_to_range(0, 1, fixed=True)
-  '$A$2:$A'
-  >>> column_to_range(0, 1, nrows=2)
-  'A2:A3'
-  >>> column_to_range(0, 1, nrows=2, fixed=True)
-  '$A$2:$A$3'
-  >>> column_to_range(0, 1, nrows=2, fixed=True, sheet='Sheet1')
-  "'Sheet1'!$A$2:$A$3"
-  """
-  col: str = column_index_to_code(col)
-  row: str = row_index_to_code(row)
-  prefix = '$' if fixed else ''
-  cells = f'{prefix}{col}{prefix}{row}'
-  if nrows == 1:
+    """
+    Examples
+    --------
+    >>> column_to_range(0, 1, nrows=1)
+    'A2'
+    >>> column_to_range(0, 1, nrows=1, fixed=True)
+    '$A$2'
+    >>> column_to_range(0, 1)
+    'A2:A'
+    >>> column_to_range(0, 1, fixed=True)
+    '$A$2:$A'
+    >>> column_to_range(0, 1, nrows=2)
+    'A2:A3'
+    >>> column_to_range(0, 1, nrows=2, fixed=True)
+    '$A$2:$A$3'
+    >>> column_to_range(0, 1, nrows=2, fixed=True, sheet='Sheet1')
+    "'Sheet1'!$A$2:$A$3"
+    """
+    col: str = column_index_to_code(col)
+    row: str = row_index_to_code(row)
+    prefix = '$' if fixed else ''
+    cells = f'{prefix}{col}{prefix}{row}'
+    if nrows == 1:
+        return cells
+    cells += f':{prefix}{col}'
+    if nrows is not None:
+        last_row = row + nrows - 1
+        cells += f'{prefix}{last_row}'
+    if sheet:
+        cells = f"'{sheet}'!{cells}"
     return cells
-  cells += f':{prefix}{col}'
-  if nrows is not None:
-    last_row = row + nrows - 1
-    cells += f'{prefix}{last_row}'
-  if sheet:
-    cells = f"'{sheet}'!{cells}"
-  return cells
 
 
 def format_value(x: Union[bool, int, float, str, None]) -> str:
@@ -186,10 +183,7 @@ def format_value(x: Union[bool, int, float, str, None]) -> str:
     raise ValueError(f'Unexpected value {x} of type {type(x)}')
 
 
-def merge_formulas(
-    formulas: List[str],
-    operator: Literal['AND', 'OR']
-) -> str:
+def merge_formulas(formulas: List[str], operator: Literal['AND', 'OR']) -> str:
     """
     Merge formulas (returning TRUE or FALSE) by a logical operator.
 
@@ -212,9 +206,7 @@ def merge_formulas(
 
 
 def merge_conditions(
-    formulas: List[str],
-    valid: bool,
-    ignore_blanks: List[bool] = None
+    formulas: List[str], valid: bool, ignore_blanks: List[bool] = None
 ) -> str:
     """
     Merge formulas (returning TRUE or FALSE) for use in conditional formatting.
@@ -275,58 +267,51 @@ def merge_conditions(
     if fs_ignore:
         # Wrap formulas ignoring blank in single if statement
         merged = merge_formulas(fs_ignore, operator=operator)
-        fs.append(
-            f'IF(ISBLANK({{col}}{{row}}), {format_value(valid)}, {merged})'
-        )
+        fs.append(f'IF(ISBLANK({{col}}{{row}}), {format_value(valid)}, {merged})')
     return merge_formulas(fs, operator=operator)
 
 
-def build_column_condition(
-  checks: List[dict],
-  valid: bool
-) -> Optional[str]:
-  """
-  Build a column's conditional formatting formula from column checks.
+def build_column_condition(checks: List[dict], valid: bool) -> Optional[str]:
+    """
+    Build a column's conditional formatting formula from column checks.
 
-  Assumes that blank cells are not ignored by the application,
-  which is the case for Microsoft Excel and Google Sheets.
+    Assumes that blank cells are not ignored by the application,
+    which is the case for Microsoft Excel and Google Sheets.
 
-  Parameters
-  ----------
-  checks
-    Column checks.
-  valid
-    Whether formulas return TRUE if the value is valid or invalid.
-    Returned formula will return TRUE if all formulas return TRUE (valid),
-    or TRUE if any formula returns TRUE (invalid).
-  """
-  if not checks:
-    return None
-  formulas = [x['formula'] for x in checks]
-  ignore_blanks = [x['ignore_blank'] for x in checks]
-  return merge_conditions(
-    formulas, valid=valid, ignore_blanks=ignore_blanks
-  )
+    Parameters
+    ----------
+    checks
+      Column checks.
+    valid
+      Whether formulas return TRUE if the value is valid or invalid.
+      Returned formula will return TRUE if all formulas return TRUE (valid),
+      or TRUE if any formula returns TRUE (invalid).
+    """
+    if not checks:
+        return None
+    formulas = [x['formula'] for x in checks]
+    ignore_blanks = [x['ignore_blank'] for x in checks]
+    return merge_conditions(formulas, valid=valid, ignore_blanks=ignore_blanks)
 
 
 def build_column_validation(checks: List[dict]) -> Optional[constants.Check]:
-  """
-  Build a column's validation from column checks.
+    """
+    Build a column's validation from column checks.
 
-  Assumes that blank cells are ignored by the application,
-  which is the case for Google Sheets and the default for Microsoft Excel.
+    Assumes that blank cells are ignored by the application,
+    which is the case for Google Sheets and the default for Microsoft Excel.
 
-  Parameters
-  ----------
-  checks:
-    Column checks. Formulas should return TRUE if value is valid.
-  """
-  if not checks:
-    return None
-  formulas = [x['formula'] for x in checks]
-  messages = [x['message'] for x in checks]
-  return {
-      'formula': merge_formulas(formulas, operator='AND'),
-      'message': constants.JOIN_CHECK_MESSAGES(messages),
-      'ignore_blank': True
-  }
+    Parameters
+    ----------
+    checks:
+      Column checks. Formulas should return TRUE if value is valid.
+    """
+    if not checks:
+        return None
+    formulas = [x['formula'] for x in checks]
+    messages = [x['message'] for x in checks]
+    return {
+        'formula': merge_formulas(formulas, operator='AND'),
+        'message': constants.JOIN_CHECK_MESSAGES(messages),
+        'ignore_blank': True,
+    }

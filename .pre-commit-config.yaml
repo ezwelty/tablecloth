@@ -15,3 +15,8 @@ repos:
       language: system
       types: [python]
       pass_filenames: false
+    - id: format
+      name: black
+      entry: poetry run black --skip-string-normalization src tests
+      language: system
+      types: [python]
