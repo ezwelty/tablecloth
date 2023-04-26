@@ -1,9 +1,8 @@
 import functools
-from typing import List, Literal, Optional, Union
 import re
+from typing import List, Literal, Optional, Union
 
 from . import constants
-
 
 # ---- Functions ----
 

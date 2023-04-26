@@ -9,10 +9,8 @@ try:
 except ImportError:
     raise ImportError('Writing Excel templates requires `xlsxwriter`')
 
-from . import constants
-from . import helpers
+from . import constants, helpers
 from .layout import Layout
-
 
 MAX_COLS: int = 16384
 """Maximum number of columns per sheet."""
