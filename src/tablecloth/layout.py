@@ -82,7 +82,10 @@ class Layout:
             )
         if values in [x['values'] for x in self.enums]:
             return
-        col = max([0, *[x['col'] for x in self.enums]])
+        if self.enums:
+            col = max([x['col'] for x in self.enums]) + 1
+        else:
+            col = 0
         self.enums.append({'values': values, 'col': col})
 
     def get_enum(self, values: list) -> dict:
