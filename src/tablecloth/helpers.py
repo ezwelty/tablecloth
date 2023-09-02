@@ -173,6 +173,10 @@ def format_value(x: Union[bool, int, float, str, None]) -> str:
     '"a"'
     >>> format_value(None)
     ''
+    >>> format_value([])
+    Traceback (most recent call last):
+      ...
+    ValueError: Unexpected value [] of type <class 'list'>
     """
     if isinstance(x, bool):
         return str(x).upper()
