@@ -49,6 +49,10 @@ def read_xlsx_as_string(path: Union[str, Path]) -> str:
     [
         ('default', {}),
         ('errors', {'error_type': 'information'}),
+        (
+            'errors-except-fkeys',
+            {'error_type': 'information', 'validate_foreign_keys': False},
+        ),
     ],
 )
 def test_writes_template(name: str, arguments: dict) -> None:

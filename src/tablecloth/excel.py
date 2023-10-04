@@ -100,6 +100,7 @@ def write_template(
     header_comments: Dict[str, List[str]] = None,
     dropdowns: bool = True,
     error_type: Literal['information', 'warning', 'stop'] = None,
+    validate_foreign_keys: bool = True,
     format_invalid: Optional[dict] = {'bg_color': '#ffc7ce'},
     format_header: Optional[dict] = {'bold': True, 'bg_color': '#d3d3d3'},
     format_comments: Optional[dict] = {'font_size': 11, 'x_scale': 2, 'y_scale': 2},
@@ -112,9 +113,11 @@ def write_template(
     Parameters
     ----------
     error_type
-      * stop: Display error message with buttons to cancel or retry
-      * warning: Display error message with buttons to accept or retry
-      * information: Display error message with button to accept
+        * stop: Display error message with buttons to cancel or retry
+        * warning: Display error message with buttons to accept or retry
+        * information: Display error message with button to accept
+    validate_foreign_keys
+        Whether to validate foreign keys (True) or only use for dropdowns (False).
     """
     # ---- Initialize
     layout = Layout(
@@ -189,6 +192,7 @@ def write_template(
 
             # Data validation
             validation = None
+            foreign_key_validation = None
             # Dropdown
             if dropdowns:
                 values = None
@@ -205,6 +209,7 @@ def write_template(
                         absolute=True,
                         indirect=layout.indirect,
                     )
+                    foreign_key_validation = True
                 elif enum:
                     values = layout.get_enum_range(enum)
                 if values:
@@ -215,7 +220,8 @@ def write_template(
                         'error_message': 'Value must be in dropdown list',
                         'ignore_blank': True,
                         'error_type': error_type or 'information',
-                        'show_error': bool(error_type),
+                        'show_error': bool(error_type)
+                        and (validate_foreign_keys if foreign_key_validation else True),
                     }
             if not validation and error_type:
                 # Get column checks
@@ -226,7 +232,9 @@ def write_template(
                     dtype=dtype,
                     **constraints,
                     enum=enum,
-                    foreign_keys=foreign_keys.get(column)
+                    foreign_keys=(
+                        foreign_keys.get(column) if validate_foreign_keys else None
+                    )
                 )
                 validation = helpers.build_column_validation(checks)
                 if validation:
@@ -252,7 +260,9 @@ def write_template(
                     dtype=dtype,
                     **constraints,
                     enum=enum,
-                    foreign_keys=foreign_keys.get(column)
+                    foreign_keys=(
+                        foreign_keys.get(column) if validate_foreign_keys else None
+                    )
                 )
                 formula = helpers.build_column_condition(checks, valid=False)
                 if formula:
