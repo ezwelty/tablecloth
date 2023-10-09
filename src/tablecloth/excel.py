@@ -15,13 +15,10 @@ from .layout import Layout
 MAX_COLS: int = 16384
 """Maximum number of columns per sheet."""
 
-MAX_COLS: int = 16384
-"""Maximum number of columns per sheet."""
+MAX_ROWS: int = 1048576
+"""Maximum number of rows per sheet."""
 
 MAX_NAME_LENGTH: int = 31
-"""Maximum length of sheet name."""
-
-MAX_ROWS: int = 1048576
 """Maximum length of sheet name."""
 
 
@@ -96,7 +93,6 @@ def write_template(
     package: dict,
     path: Union[str, Path] = None,
     enum_sheet: str = 'lists',
-    hide_enum_sheet: bool = True,
     header_comments: Dict[str, List[str]] = None,
     dropdowns: bool = True,
     error_type: Literal['information', 'warning', 'stop'] = None,
@@ -108,7 +104,7 @@ def write_template(
     hide_columns: bool = False,
 ) -> Optional[xlsxwriter.Workbook]:
     """
-    Write package template.
+    Write package template to Microsoft Excel.
 
     Parameters
     ----------
@@ -187,7 +183,7 @@ def write_template(
                 esheet = book.get_worksheet_by_name(enum_sheet)
                 if not esheet:
                     esheet = book.add_worksheet(enum_sheet)
-                    esheet.protect()
+                    esheet.hide()
                 write_enum(sheet=esheet, values=enum, col=layout.get_enum(enum)['col'])
 
             # Data validation
@@ -248,7 +244,6 @@ def write_template(
                         'show_error': bool(error_type),
                     }
             if validation:
-                cells = layout.get_column_range(table, column)
                 sheet.data_validation(cells, validation)
 
             # Conditional formatting
@@ -278,10 +273,6 @@ def write_template(
                             'format': format_invalid,
                         },
                     )
-    if hide_enum_sheet:
-        sheet = book.get_worksheet_by_name(enum_sheet)
-        if sheet:
-            sheet.hide()
     if path is None:
         return book
     book.close()
