@@ -18,7 +18,7 @@ Optional support for Google Sheets should follow shortly.
 ## Example
 
 ```py
-import tablecloth
+import tablecloth.excel
 
 # Load a Frictionless Tabular Data Package specification
 package = {
