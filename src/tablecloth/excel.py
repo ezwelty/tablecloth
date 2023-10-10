@@ -32,7 +32,7 @@ def write_table(
     hide_columns: bool = False,
 ) -> None:
     """
-    Write empty table to Microsoft Excel.
+    Write empty table with header to Microsoft Excel.
 
     Parameters
     ----------
@@ -109,18 +109,15 @@ def write_template(
     Parameters
     ----------
     error_type
-        * stop: Display error message with buttons to cancel or retry
-        * warning: Display error message with buttons to accept or retry
         * information: Display error message with button to accept
+        * warning: Display error message with buttons to accept or retry
+        * stop: Display error message with buttons to cancel or retry
     validate_foreign_keys
         Whether to validate foreign keys (True) or only use for dropdowns (False).
     """
     # ---- Initialize
     layout = Layout(
-        enum_sheet=enum_sheet,
-        max_name_length=MAX_NAME_LENGTH,
-        max_rows=MAX_ROWS,
-        indirect=False,
+        enum_sheet=enum_sheet, max_name_length=MAX_NAME_LENGTH, max_rows=MAX_ROWS
     )
     book = xlsxwriter.Workbook(filename=path)
     # Register formats
@@ -199,11 +196,7 @@ def write_template(
                     # NOTE: Uses first foreign key
                     foreign_table, foreign_column = foreign_keys[column][0]
                     values = layout.get_column_range(
-                        foreign_table,
-                        foreign_column,
-                        fixed=True,
-                        absolute=True,
-                        indirect=layout.indirect,
+                        foreign_table, foreign_column, fixed=True, absolute=True
                     )
                     foreign_key_validation = True
                 elif enum:
@@ -213,7 +206,7 @@ def write_template(
                         'validate': 'list',
                         'value': values,
                         'error_title': 'Invalid value',
-                        'error_message': 'Value must be in dropdown list',
+                        'error_message': 'Value must be in the dropdown list',
                         'ignore_blank': True,
                         'error_type': error_type or 'information',
                         'show_error': bool(error_type)

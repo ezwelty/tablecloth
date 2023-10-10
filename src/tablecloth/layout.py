@@ -1,6 +1,6 @@
 import re
 import warnings
-from typing import List, Literal, Tuple, Union
+from typing import Any, List, Literal, Tuple, Type, Union
 
 from . import constants, helpers
 
@@ -21,9 +21,6 @@ class Layout:
       Otherwise, they are bounded (e.g. `A2:A1000`).
     max_name_length:
       Maximum length of sheet name (in characters).
-    indirect:
-      Whether to wrap foreign table lookups in `INDIRECT` function.
-      See https://support.google.com/docs/answer/3093377.
     """
 
     def __init__(
@@ -31,14 +28,26 @@ class Layout:
         enum_sheet: str = 'lists',
         max_rows: int = None,
         max_name_length: int = None,
-        indirect: bool = False,
     ) -> None:
         self.tables: List[constants.Table] = []
         self.enums: List[constants.Enum] = []
         self.enum_sheet = enum_sheet
         self.max_rows = max_rows
         self.max_name_length = max_name_length
-        self.indirect = indirect
+
+    @classmethod
+    def from_package(cls: Type['Layout'], package: dict, **kwargs: Any) -> 'Layout':
+        layout = cls(**kwargs)
+        for resource in package['resources']:
+            layout.set_table(
+                table=resource['name'],
+                columns=[field['name'] for field in resource['schema']['fields']],
+            )
+            for field in resource['schema']['fields']:
+                values = field.get('constraints', {}).get('enum')
+                if values:
+                    layout.set_enum(values)
+        return layout
 
     def set_table(self, table: str, columns: List[str], sheet: str = None) -> None:
         """
@@ -95,16 +104,34 @@ class Layout:
                 return x
         raise KeyError(f'Enum with values {values} not found')
 
-    def get_enum_range(self, values: list) -> str:
-        """Get an enum's cell range."""
+    def get_enum_range(self, values: list, indirect: bool = False) -> str:
+        """
+        Get an enum's cell range.
+
+        Parameters
+        ----------
+        values
+            Enum values.
+        indirect
+            Whether to wrap range in `INDIRECT` function.
+            See https://support.google.com/docs/answer/3093377.
+        """
         x = self.get_enum(values)
-        return helpers.column_to_range(
+        cells = helpers.column_to_range(
             col=x['col'],
             row=0,
             nrows=len(x['values']),
             fixed=True,
             sheet=self.enum_sheet,
         )
+        if indirect:
+            cells = f'INDIRECT("{cells}")'
+        return cells
+
+    def get_column_index(self, table: str, column: str) -> int:
+        """Get a column's index (zero-based)."""
+        x = self.get_table(table)
+        return x['columns'].index(column)
 
     def get_column_code(self, table: str, column: str) -> str:
         """
@@ -119,8 +146,8 @@ class Layout:
         >>> layout.get_column_code('table', 'x')
         'B'
         """
-        x = self.get_table(table)
-        return helpers.column_index_to_code(x['columns'].index(column))
+        index = self.get_column_index(table, column)
+        return helpers.column_index_to_code(index)
 
     def get_column_range(
         self,
@@ -133,18 +160,24 @@ class Layout:
     ) -> str:
         """
         Get a column's cell range.
+
+        Parameters
+        ----------
+        indirect
+            Whether to wrap range in `INDIRECT` function.
+            See https://support.google.com/docs/answer/3093377.
         """
         x = self.get_table(table)
         col = x['columns'].index(column)
         cells = helpers.column_to_range(
             col=col,
             row=1,
-            nrows=nrows or (self.max_rows - 1),
+            nrows=nrows or (self.max_rows - 1 if self.max_rows else None),
             fixed=fixed,
             sheet=x['sheet'] if absolute else None,
         )
         if indirect:
-            cells = f'INDIRECT({cells})'
+            cells = f'INDIRECT("{cells}")'
         return cells
 
     # def build_column_dropdown(
@@ -234,6 +267,7 @@ class Layout:
         pattern: str = None,
         enum: list = None,
         foreign_keys: List[Tuple[str, str]] = None,
+        indirect: bool = False,
     ) -> List[constants.Check]:
         columns = self.get_table(table)['columns']
         defaults = {
@@ -241,7 +275,7 @@ class Layout:
             'row': 2,
             'min_col': self.get_column_code(table, columns[0]),
             'max_col': self.get_column_code(table, columns[-1]),
-            'max_row': f'${self.max_rows}',
+            'max_row': f'${self.max_rows}' if self.max_rows else '',
             'ncols': len(columns),
         }
         f: Literal['valid', 'invalid'] = 'valid' if valid else 'invalid'
@@ -284,7 +318,7 @@ class Layout:
         check = constants.IN_RANGE
         # enum
         if enum:
-            enum_range = self.get_enum_range(enum)
+            enum_range = self.get_enum_range(enum, indirect=indirect)
             checks.append(
                 {
                     'formula': check[f].format(**defaults, range=enum_range),
@@ -300,7 +334,7 @@ class Layout:
                 foreign_column,
                 absolute=foreign_table != table,
                 fixed=True,
-                indirect=self.indirect,
+                indirect=indirect,
             )
             checks.append(
                 {

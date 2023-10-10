@@ -300,6 +300,24 @@ def build_column_condition(checks: List[dict], valid: bool) -> Optional[str]:
     return merge_conditions(formulas, valid=valid, ignore_blanks=ignore_blanks)
 
 
+def readable_join(values: List[str]) -> str:
+    """
+    Return an English grammatically-correct list (with an Oxford comma).
+
+    Examples
+    --------
+    >>> readable_join(['a'])
+    'a'
+    >>> readable_join(['a', 'b'])
+    'a and b'
+    >>> readable_join(['a', 'b', 'c'])
+    'a, b, and c'
+    """
+    if len(values) < 3:
+        return ' and '.join(values)
+    return ', '.join(values[:-1]) + ', and ' + values[-1]
+
+
 def build_column_validation(checks: List[dict]) -> Optional[constants.Check]:
     """
     Build a column's validation from column checks.
@@ -318,6 +336,6 @@ def build_column_validation(checks: List[dict]) -> Optional[constants.Check]:
     messages = [x['message'] for x in checks]
     return {
         'formula': merge_formulas(formulas, operator='AND'),
-        'message': constants.JOIN_CHECK_MESSAGES(messages),
+        'message': f'Value must be {readable_join(messages)}',
         'ignore_blank': True,
     }

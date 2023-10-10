@@ -126,7 +126,7 @@ CONSTRAINTS: Dict[str, CheckTemplate] = {
     'pattern': {
         'valid': 'REGEXMATCH(TO_TEXT({col}{row}), "^{value}$")',
         'invalid': 'NOT(REGEXMATCH(TO_TEXT({col}{row}), "^{value}$"))',
-        'message': 'match pattern {value}',
+        'message': 'matching the regular expression {value}',
         'ignore_blank': True,
     },
 }
@@ -146,7 +146,7 @@ Formula templates for (in)valid constraint checks.
 IN_RANGE: CheckTemplate = {
     'valid': 'ISNUMBER(MATCH({col}{row}, {range}, 0))',
     'invalid': 'ISNA(MATCH({col}{row}, {range}, 0))',
-    'message': 'not in list ({range})',
+    'message': 'in the range {range}',
     'ignore_blank': True,
 }
 """
@@ -156,8 +156,3 @@ Formula templates to check whether a value is in a range.
 * row: First (minimum) row number.
 * range: Cell range to look in.
 """
-
-
-def JOIN_CHECK_MESSAGES(messages: List[str]) -> str:
-    """Join check messages into an error message for formula validation."""
-    return 'Value must be:\n' + '\n'.join(messages)

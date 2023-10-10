@@ -9,11 +9,14 @@ Generate spreadsheet templates for data entry based on metadata.
 ## Installation
 
 ```sh
-pip install "tablecloth[excel] @ git+https://github.com/ezwelty/tablecloth"
+pip install "tablecloth[excel,gsheets] @ git+https://github.com/ezwelty/tablecloth"
+# Or with only one output format supported:
+# pip install "tablecloth[excel] @ git+https://github.com/ezwelty/tablecloth"
+# pip install "tablecloth[gsheets] @ git+https://github.com/ezwelty/tablecloth"
 ```
 
-The `[excel]` adds (optional) support for Microsoft Excel templates.
-Optional support for Google Sheets should follow shortly.
+* `[excel]`: Adds (optional) support for Microsoft Excel
+* `[gsheets]`: Adds (optional) support for Google Sheets
 
 ## Example
 
