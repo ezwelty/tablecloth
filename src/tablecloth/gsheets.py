@@ -195,47 +195,38 @@ def write_template(
         Whether to hide unused columns.
     """
     # ---- Initialize
-    layout = Layout(
-        enum_sheet=enum_sheet, max_name_length=MAX_NAME_LENGTH, max_rows=None
+    layout = Layout.from_package(
+        package=package,
+        enum_sheet=enum_sheet,
+        max_name_length=MAX_NAME_LENGTH,
+        max_rows=None,
     )
 
     # ---- Write tables
-    for resource in package['resources']:
-        table = resource['name']
-        columns = [field['name'] for field in resource['schema']['fields']]
-        layout.set_table(table, columns)
-        sheet = book.add_worksheet(table)
+    for info in layout.tables:
+        sheet = book.add_worksheet(info['sheet'])
         write_table(
-            sheet,
-            header=[field['name'] for field in resource['schema']['fields']],
-            freeze_header=freeze_header,
+            sheet=sheet,
+            header=info['columns'],
+            comment_header=(header_comments or {}).get(info['table']),
             format_header=format_header,
-            comment_header=header_comments.get(table) if header_comments else None,
+            freeze_header=freeze_header,
             hide_columns=hide_columns,
         )
 
     # --- Write enums
-    # Add separately so that the remaining can be batched
-    if dropdowns or error_type or format_invalid:
-        for resource in package['resources']:
-            for field in resource['schema']['fields']:
-                enum = field.get('constraints', {}).get('enum')
-                if enum:
-                    layout.set_enum(enum)
-                    try:
-                        esheet = book.worksheet_by_title(enum_sheet)
-                    except pygsheets.exceptions.WorksheetNotFound:
-                        esheet = book.add_worksheet(enum_sheet)
-                        esheet.hidden = True
-                    write_enum(
-                        sheet=esheet, values=enum, col=layout.get_enum(enum)['col']
-                    )
+    if (dropdowns or error_type or format_invalid) and layout.enums:
+        sheet = book.add_worksheet(layout.enum_sheet)
+        sheet.hidden = True
+        for info in layout.enums:
+            write_enum(sheet=sheet, values=info['values'], col=info['col'])
 
     # --- Add column checks
     with batched(book.client):
         for resource in package['resources']:
             table = resource['name']
-            sheet: pygsheets.Worksheet = book.worksheet_by_title(table)
+            sheet_name = layout.get_table(table)['sheet']
+            sheet: pygsheets.Worksheet = book.worksheet_by_title(sheet_name)
             foreign_keys = resource['schema'].get('foreignKeys', [])
 
             # For each column

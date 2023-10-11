@@ -146,8 +146,11 @@ def write_template(
         Whether to hide unused columns.
     """
     # ---- Initialize
-    layout = Layout(
-        enum_sheet=enum_sheet, max_name_length=MAX_NAME_LENGTH, max_rows=MAX_ROWS
+    layout = Layout.from_package(
+        package=package,
+        enum_sheet=enum_sheet,
+        max_name_length=MAX_NAME_LENGTH,
+        max_rows=MAX_ROWS,
     )
     book = xlsxwriter.Workbook(filename=path)
     # Register formats
@@ -157,25 +160,30 @@ def write_template(
         format_header: xlsxwriter.format.Format = book.add_format(format_header)
 
     # ---- Write tables
-    for resource in package['resources']:
-        table = resource['name']
-        columns = [field['name'] for field in resource['schema']['fields']]
-        layout.set_table(table, columns)
-        sheet = book.add_worksheet(table)
+    for info in layout.tables:
+        sheet = book.add_worksheet(info['sheet'])
         write_table(
-            sheet,
-            header=[field['name'] for field in resource['schema']['fields']],
-            comment_header=header_comments.get(table) if header_comments else None,
+            sheet=sheet,
+            header=info['columns'],
+            comment_header=(header_comments or {}).get(info['table']),
             format_header=format_header,
             format_comments=format_comments,
             freeze_header=freeze_header,
             hide_columns=hide_columns,
         )
 
+    # ---- Write enums
+    if (dropdowns or error_type or format_invalid) and layout.enums:
+        sheet = book.add_worksheet(layout.enum_sheet)
+        sheet.hide()
+        for info in layout.enums:
+            write_enum(sheet=sheet, values=info['values'], col=info['col'])
+
     # --- Add column checks
     for resource in package['resources']:
         table = resource['name']
-        sheet: xlsxwriter.worksheet.Worksheet = book.get_worksheet_by_name(table)
+        sheet_name = layout.get_table(table)['sheet']
+        sheet: xlsxwriter.worksheet.Worksheet = book.get_worksheet_by_name(sheet_name)
         foreign_keys = resource['schema'].get('foreignKeys', [])
 
         # For each column
@@ -189,16 +197,6 @@ def write_template(
                 # No regex support in Excel
                 if key not in ['pattern']
             }
-            enum = constraints.get('enum')
-
-            # Register enum
-            if enum and (dropdowns or error_type or format_invalid):
-                layout.set_enum(enum)
-                esheet = book.get_worksheet_by_name(enum_sheet)
-                if not esheet:
-                    esheet = book.add_worksheet(enum_sheet)
-                    esheet.hide()
-                write_enum(sheet=esheet, values=enum, col=layout.get_enum(enum)['col'])
 
             # Data validation
             validation = None
