@@ -1,6 +1,6 @@
 import re
 import warnings
-from typing import Any, List, Literal, Tuple, Type, Union
+from typing import Any, List, Literal, Optional, Type
 
 from . import constants, helpers
 
@@ -14,13 +14,15 @@ class Layout:
     tables
         Tables added by :meth:`set_table`.
     enums
-      Enums added by :meth:`set_enum`.
+        Enums added by :meth:`set_enum`.
+    enum_sheet
+        Name of the sheet used to store enums.
     max_rows
-      Maximum number of rows allowed per sheet.
-      If `None`, column ranges are unbounded (e.g. `A2:A`).
-      Otherwise, they are bounded (e.g. `A2:A1000`).
-    max_name_length:
-      Maximum length of sheet name (in characters).
+        Maximum number of rows allowed per sheet.
+        If `None`, column ranges are unbounded (e.g. `A2:A`).
+        Otherwise, they are bounded (e.g. `A2:A1000`).
+    max_name_length
+        Maximum length of sheet names (in characters).
     """
 
     def __init__(
@@ -37,6 +39,19 @@ class Layout:
 
     @classmethod
     def from_package(cls: Type['Layout'], package: dict, **kwargs: Any) -> 'Layout':
+        """
+        Initialize a layout from a Frictionless Data Tabular Data Package.
+
+        Sets all tables and enums found in the package using default settings.
+
+        Parameters
+        ----------
+        package
+            Frictionless Data Tabular Data Package specification.
+            See https://specs.frictionlessdata.io/tabular-data-package.
+        **kwargs
+            Arguments to :class:`Layout`.
+        """
         layout = cls(**kwargs)
         for resource in package['resources']:
             layout.set_table(
@@ -117,25 +132,25 @@ class Layout:
             See https://support.google.com/docs/answer/3093377.
         """
         x = self.get_enum(values)
-        cells = helpers.column_to_range(
+        return helpers.column_to_range(
             col=x['col'],
             row=0,
             nrows=len(x['values']),
             fixed=True,
             sheet=self.enum_sheet,
+            indirect=indirect,
         )
-        if indirect:
-            cells = f'INDIRECT("{cells}")'
-        return cells
-
-    def get_column_index(self, table: str, column: str) -> int:
-        """Get a column's index (zero-based)."""
-        x = self.get_table(table)
-        return x['columns'].index(column)
 
     def get_column_code(self, table: str, column: str) -> str:
         """
         Get a column's code.
+
+        Parameters
+        ----------
+        table
+            Table name.
+        column
+            Column name.
 
         Examples
         --------
@@ -146,7 +161,8 @@ class Layout:
         >>> layout.get_column_code('table', 'x')
         'B'
         """
-        index = self.get_column_index(table, column)
+        x = self.get_table(table)
+        index = x['columns'].index(column)
         return helpers.column_index_to_code(index)
 
     def get_column_range(
@@ -154,103 +170,114 @@ class Layout:
         table: str,
         column: str,
         nrows: int = None,
-        fixed: bool = False,
         absolute: bool = False,
+        fixed: bool = False,
         indirect: bool = False,
     ) -> str:
         """
-        Get a column's cell range.
+        Get a column's cell range (not including the header).
 
         Parameters
         ----------
+        table
+            Table name.
+        column
+            Column name.
+        nrows
+            Number of rows to include.
+            If None, includes all rows (to `self.max_rows` or unbounded if undefined).
+        absolute
+            Whether to refer to the range by sheet name (e.g. 'Sheet1'!A2:A).
+        fixed
+            Whether to use a fixed range (e.g. $A$2:$A).
         indirect
             Whether to wrap range in `INDIRECT` function.
             See https://support.google.com/docs/answer/3093377.
         """
         x = self.get_table(table)
         col = x['columns'].index(column)
-        cells = helpers.column_to_range(
+        return helpers.column_to_range(
             col=col,
             row=1,
             nrows=nrows or (self.max_rows - 1 if self.max_rows else None),
-            fixed=fixed,
             sheet=x['sheet'] if absolute else None,
+            fixed=fixed,
+            indirect=indirect,
         )
-        if indirect:
-            cells = f'INDIRECT("{cells}")'
-        return cells
 
-    # def build_column_dropdown(
-    #   self,
-    #   table: str,
-    #   column: str,
-    #   message: str = 'Value must be in list'
-    # ) -> dict:
-    #   cells = self.get_column_range(table=table, column=column)
-    #   return {'values': cells, 'message': message}
+    def select_column_dropdown(
+        self,
+        table: str,
+        column: str,
+        dtype: str = None,
+        constraints: constants.Constraints = None,
+        foreign_keys: List[constants.ForeignKey] = None,
+        indirect: bool = False,
+    ) -> Optional[constants.Dropdown]:
+        """
+        Whether and what to use as a dropdown for a column's data validation.
 
-    # def build_enum_dropdown(
-    #   self,
-    #   values: list,
-    #   sheet: str,
-    #   message: str = 'Value must be in list'
-    # ) -> dict:
-    #   cells = self.get_enum(values=values, sheet=sheet)['range']
-    #   return {'values': cells, 'message': message}
+        The dropdown (if any) is selected in the following order:
 
-    # def build_column_validations(
-    #   self,
-    #   table: str,
-    #   column: str,
-    #   dtype: str = None,
-    #   required: bool = False,
-    #   unique: bool = False,
-    #   minimum: Union[int, float] = None,
-    #   maximum: Union[int, float] = None,
-    #   min_length: int = None,
-    #   max_length: int = None,
-    #   pattern: str = None
-    # ) -> List[dict]:
-    #   columns = self.get_table(table)['columns']
-    #   defaults = {
-    #     'col': self.get_column_code(table, column),
-    #     'row': 2,
-    #     'min_col': self.get_column_code(table, columns[0]),
-    #     'max_col': self.get_column_code(table, columns[-1]),
-    #     'max_row': f'${self.max_rows}',
-    #     'ncols': len(columns)
-    #   }
-    #   checks = []
+        * Boolean data type (`dtype: 'boolean'`). Uses values (TRUE, FALSE).
+        * Enumerated value constraint (`constraints.enum`).
+        * Foreign key. If multiple `foreign_keys` match the column, the first is used.
+          A foreign key involving multiple columns is reduced to a simple foreign key
+          between `column` and the corresponding foreign column.
 
-    #   # Field type
-    #   if dtype in constants.TYPES:
-    #     check = constants.TYPES[dtype]
-    #     checks.append({
-    #       'formula': check['valid'].format(**defaults),
-    #       'message': check['message'],
-    #       'ignore_blank': check['ignore_blank']
-    #     })
+        Parameters
+        ----------
+        table
+            Table name.
+        column
+            Column name.
+        dtype
+            Column type. See
+            https://specs.frictionlessdata.io/table-schema/#types-and-formats.
+        constraints
+            Column constraints. See
+            https://specs.frictionlessdata.io/table-schema/#constraints.
+            An `enum` constraint must already be registered with :meth:`set_enum`.
+        foreign_keys
+            Foreign key constraints. See
+            https://specs.frictionlessdata.io/table-schema/#foreign-keys.
+            The referenced table(s) and column(s) must already be registered with
+            :meth:`set_table`.
+        indirect
+            Whether to wrap cell ranges (for enum constraints and foreign keys)
+            in the `INDIRECT` function.
+            See https://support.google.com/docs/answer/3093377.
 
-    #   # Field constraints (except enum)
-    #   constraints = {
-    #       'required': required,
-    #       'unique': unique,
-    #       'minimum': minimum,
-    #       'maximum': maximum,
-    #       'min_length': min_length,
-    #       'max_length': max_length,
-    #       'pattern': pattern
-    #   }
-    #   for key, value in constraints.items():
-    #       if value in (None, False, ''):
-    #           continue
-    #       check = constants.CONSTRAINTS[key]
-    #       checks.append({
-    #           'formula': check['valid'].format(**defaults, value=value),
-    #           'message': check['message'].format(value=value),
-    #           'ignore_blank': check['ignore_blank']
-    #       })
-    #   return checks
+        Returns
+        -------
+        dropdown :
+            Either None or a dictionary with the following keys:
+
+            * source: Either 'boolean', 'foreign_key', or 'enum'.
+            * values: Either a list (for boolean) or a cell range.
+        """
+        # Boolean
+        if dtype == 'boolean':
+            return {'source': 'boolean', 'values': ['TRUE', 'FALSE']}
+        # Foreign key
+        keys = helpers.reduce_foreign_keys(
+            foreign_keys or [], table=table, column=column
+        )
+        if keys:
+            values = self.get_column_range(
+                table=keys[0][0] or table,
+                column=keys[0][1],
+                fixed=True,
+                absolute=keys[0][0] is not None,
+                indirect=indirect,
+            )
+            return {'source': 'foreign_key', 'values': values}
+        # Enum
+        enum = (constraints or {}).get('enum')
+        if enum:
+            values = self.get_enum_range(enum, indirect=indirect)
+            return {'source': 'enum', 'values': values}
+        return None
 
     def gather_column_checks(
         self,
@@ -258,17 +285,41 @@ class Layout:
         column: str,
         valid: bool,
         dtype: str = None,
-        required: bool = False,
-        unique: bool = False,
-        minimum: Union[int, float] = None,
-        maximum: Union[int, float] = None,
-        min_length: int = None,
-        max_length: int = None,
-        pattern: str = None,
-        enum: list = None,
-        foreign_keys: List[Tuple[str, str]] = None,
+        constraints: constants.Constraints = None,
+        foreign_keys: List[constants.ForeignKey] = None,
         indirect: bool = False,
     ) -> List[constants.Check]:
+        """
+        Gather all checks for a column.
+
+        Parameters
+        ----------
+        table
+            Table name.
+        column
+            Column name.
+        valid
+            Whether formulas should return TRUE for valid (True) or invalid (False)
+            values.
+        dtype
+            Column type. See
+            https://specs.frictionlessdata.io/table-schema/#types-and-formats
+            (and `constants.TYPES` for which are supported).
+        constraints
+            Column constraints. See
+            https://specs.frictionlessdata.io/table-schema/#constraints.
+            Both snake_case and camelCase are supported.
+            An `enum` constraint must first be registered with `self.set_enum`.
+        foreign_keys
+            Foreign key constraints. See
+            https://specs.frictionlessdata.io/table-schema/#foreign-keys.
+            Composite foreign keys (with multiple columns) cannot be readily enforced
+            in a spreadsheet, so they are treated as multiple simple foreign keys.
+        indirect
+            Whether to wrap cell ranges (for enum constraints and foreign keys)
+            in the `INDIRECT` function.
+            See https://support.google.com/docs/answer/3093377.
+        """
         columns = self.get_table(table)['columns']
         defaults = {
             'col': self.get_column_code(table, column),
@@ -292,18 +343,16 @@ class Layout:
                 }
             )
 
-        # Field constraints (except enum)
+        # Format constraints
         constraints = {
-            'required': required,
-            'unique': unique,
-            'minimum': minimum,
-            'maximum': maximum,
-            'min_length': min_length,
-            'max_length': max_length,
-            'pattern': pattern,
+            helpers.camel_to_snake_case(key): value
+            for key, value in (constraints or {}).items()
+            if value not in (None, False, '', [])
         }
+
+        # Field constraints (except enum)
         for key, value in constraints.items():
-            if value in (None, False, ''):
+            if key not in constants.CONSTRAINTS:
                 continue
             check = constants.CONSTRAINTS[key]
             checks.append(
@@ -317,8 +366,8 @@ class Layout:
         # Range lookups
         check = constants.IN_RANGE
         # enum
-        if enum:
-            enum_range = self.get_enum_range(enum, indirect=indirect)
+        if 'enum' in constraints:
+            enum_range = self.get_enum_range(constraints['enum'], indirect=indirect)
             checks.append(
                 {
                     'formula': check[f].format(**defaults, range=enum_range),
@@ -327,8 +376,15 @@ class Layout:
                 }
             )
         # foreign keys
-        for foreign_table, foreign_column in foreign_keys or []:
-            foreign_table = foreign_table or table
+        for key in foreign_keys or []:
+            columns = helpers.to_list(key['fields'])
+            foreign_columns = helpers.to_list(key['reference']['fields'])
+            try:
+                i = columns.index(column)
+            except ValueError:
+                continue
+            foreign_column = foreign_columns[i]
+            foreign_table = key['reference'].get('resource') or table
             column_range = self.get_column_range(
                 foreign_table,
                 foreign_column,

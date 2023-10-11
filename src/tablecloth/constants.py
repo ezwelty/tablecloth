@@ -1,4 +1,4 @@
-from typing import Dict, List, TypedDict
+from typing import Dict, List, Literal, Optional, TypedDict, Union
 
 
 class Table(TypedDict):
@@ -45,6 +45,56 @@ class CheckTemplate(TypedDict):
     """Whether to skip the checking of blank cells."""
 
 
+class Dropdown(TypedDict):
+    """Column dropdown."""
+
+    values: Union[List[str], str]
+    """Dropdown values as a list or cell range."""
+    source: Literal['boolean', 'foreign_key', 'enum']
+    """Source of dropdown values."""
+
+
+class ForeignKeyReference(TypedDict):
+    """Foreign key reference."""
+
+    resource: Optional[str]
+    """Table name."""
+    fields: Union[str, List[str]]
+    """Column name(s)."""
+
+
+class ForeignKey(TypedDict):
+    """Foreign key (https://specs.frictionlessdata.io/table-schema/#foreign-keys)."""
+
+    fields: Union[str, List[str]]
+    """Local column name(s)."""
+    reference: ForeignKeyReference
+    """Foreign reference."""
+
+
+class Constraints(TypedDict, total=False):
+    """
+    Column constraints (https://specs.frictionlessdata.io/table-schema/#constraints).
+    """
+
+    required: bool
+    """Whether a value is required."""
+    unique: bool
+    """Whether values must be unique."""
+    min_length: int
+    """Minimum length (of string)."""
+    max_length: int
+    """Maximum length (of string)."""
+    minimum: Union[int, float]
+    """Minimum value."""
+    maximum: Union[int, float]
+    """Maximum value."""
+    pattern: str
+    """Regular expression."""
+    enum: Union[List[int], List[float], List[str]]
+    """List of allowed values."""
+
+
 LETTERS: str = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
 """Letters of the latin alphabet."""
 
@@ -77,6 +127,9 @@ TYPES: Dict[str, CheckTemplate] = {
 }
 """
 Formula templates for (in)valid type checks.
+
+Supports a subset of the types in the Frictionless Data Table Schema specification:
+https://specs.frictionlessdata.io/table-schema/#types-and-formats
 
 * col: Column code.
 * row: First (minimum) row number.
@@ -132,6 +185,10 @@ CONSTRAINTS: Dict[str, CheckTemplate] = {
 }
 """
 Formula templates for (in)valid constraint checks.
+
+Supports all constraints in the Frictionless Data Table Schema specification:
+https://specs.frictionlessdata.io/table-schema/#constraints
+(`enum` is handled separately).
 
 * col: Column code.
 * row: First (minimum) row number.

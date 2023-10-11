@@ -1,4 +1,3 @@
-from collections import defaultdict
 from pathlib import Path
 from typing import Dict, List, Literal, Optional, Union
 
@@ -9,7 +8,7 @@ try:
 except ImportError:
     raise ImportError('Writing Excel templates requires `xlsxwriter`')
 
-from . import constants, helpers
+from . import helpers
 from .layout import Layout
 
 MAX_COLS: int = 16384
@@ -32,25 +31,27 @@ def write_table(
     hide_columns: bool = False,
 ) -> None:
     """
-    Write empty table with header to Microsoft Excel.
+    Write an empty table (with header) to a Microsoft Excel sheet.
 
     Parameters
     ----------
     sheet
-        Spreadsheet.
+        Worksheet.
     header
-        Content of the first (header) row.
+        Content of the header row (one value per cell).
     freeze_header
         Whether to freeze the header.
     format_header
-        Whether and how to format the header.
+        Whether and how to format header cells.
+        See https://xlsxwriter.readthedocs.io/format.html.
     comment_header
-        Whether and what text to add to the header.
+        Whether and what text to add as a comment to each header cell (or None to skip).
     format_comments
-        Whether and how to format header comments.
+        Whether and how to format header comments. See
+        https://xlsxwriter.readthedocs.io/working_with_cell_comments.html#cell-comments.
     hide_columns
         Whether to hide unused columns.
-        Ignored if `comment_header`, as Excel prevents hiding columns that
+        Ignored if `comment_header` is True, as Excel prevents hiding columns that
         overlap a comment.
     """
     # Write header
@@ -71,12 +72,12 @@ def write_table(
 
 def write_enum(sheet: xlsxwriter.worksheet.Worksheet, values: list, col: int) -> None:
     """
-    Write enumerated values to Microsoft Excel.
+    Write enumerated values to a column in a Microsoft Excel sheet.
 
     Parameters
     ----------
     sheet
-        Spreadsheet.
+        Worksheet.
     values
         Values.
     col
@@ -104,16 +105,45 @@ def write_template(
     hide_columns: bool = False,
 ) -> Optional[xlsxwriter.Workbook]:
     """
-    Write package template to Microsoft Excel.
+    Write a template for data entry to a Microsoft Excel workbook.
 
     Parameters
     ----------
+    package
+        Frictionless Data Tabular Data Package specification.
+        See https://specs.frictionlessdata.io/tabular-data-package.
+    path
+        Path of the created Microsoft Excel (.xlsx) file.
+        If None, the result is returned as `xlsxwriter.Workbook`.
+    enum_sheet
+        Name of sheet used for enumerated value constraints.
+    header_comments
+        For each table (with `resource.name` as dictionary key),
+        whether and what text to add as a comment to each column header
+        (one value per cell, None to skip).
+    dropdowns
+        Whether to display a dropdown if a column meets certain conditions.
+        See :meth:`Layout.select_column_dropdown`.
+        If selected, additional column constraints will not be enforced by `error_type`,
+        but will be by `format_invalid`.
     error_type
-        * information: Display error message with button to accept
-        * warning: Display error message with buttons to accept or retry
-        * stop: Display error message with buttons to cancel or retry
+        Whether and which error type to raise if invalid input is detected:
+
+        * information: Display a message with a button to accept.
+        * warning: Display a message with buttons to accept or retry.
+        * stop: Display a message with buttons to cancel or retry.
     validate_foreign_keys
         Whether to validate foreign keys (True) or only use for dropdowns (False).
+    format_invalid
+        Formatting for cells with invalid input.
+        See https://xlsxwriter.readthedocs.io/format.html.
+    format_header
+        Formatting for header cells.
+        See https://xlsxwriter.readthedocs.io/format.html.
+    freeze_header
+        Whether to freeze the header.
+    hide_columns
+        Whether to hide unused columns.
     """
     # ---- Initialize
     layout = Layout(
@@ -146,33 +176,20 @@ def write_template(
     for resource in package['resources']:
         table = resource['name']
         sheet: xlsxwriter.worksheet.Worksheet = book.get_worksheet_by_name(table)
-
-        # Compile foreign keys by column
-        foreign_keys = defaultdict(list)
-        for key in resource['schema'].get('foreignKeys', []):
-            fields = helpers.to_list(key['fields'])
-            ref_fields = helpers.to_list(key['reference']['fields'])
-            # Composite keys are treated as multiple simple keys
-            for field, ref_field in zip(fields, ref_fields):
-                foreign_keys[field].append(
-                    (key['reference']['resource'] or table, ref_field)
-                )
+        foreign_keys = resource['schema'].get('foreignKeys', [])
 
         # For each column
         for field in resource['schema']['fields']:
             column = field['name']
             cells = layout.get_column_range(table, column)
             dtype = field.get('type', 'any')
-            enum = field.get('constraints', {}).get('enum')
             constraints = {
-                helpers.camel_to_snake_case(k): v
-                for k, v in field.get('constraints', {}).items()
-                if (
-                    helpers.camel_to_snake_case(k) in constants.CONSTRAINTS
-                    # No regex support in Excel
-                    and k not in ['pattern']
-                )
+                key: value
+                for key, value in field.get('constraints', {}).items()
+                # No regex support in Excel
+                if key not in ['pattern']
             }
+            enum = constraints.get('enum')
 
             # Register enum
             if enum and (dropdowns or error_type or format_invalid):
@@ -185,32 +202,31 @@ def write_template(
 
             # Data validation
             validation = None
-            foreign_key_validation = None
             # Dropdown
             if dropdowns:
-                values = None
-                if dtype == 'boolean':
-                    values = ['TRUE', 'FALSE']
-                elif column in foreign_keys:
-                    # TODO: Move to Layout.get_column_dropdown
-                    # NOTE: Uses first foreign key
-                    foreign_table, foreign_column = foreign_keys[column][0]
-                    values = layout.get_column_range(
-                        foreign_table, foreign_column, fixed=True, absolute=True
-                    )
-                    foreign_key_validation = True
-                elif enum:
-                    values = layout.get_enum_range(enum)
-                if values:
+                dropdown = layout.select_column_dropdown(
+                    table=table,
+                    column=column,
+                    dtype=dtype,
+                    constraints=constraints,
+                    foreign_keys=foreign_keys,
+                    indirect=False,
+                )
+                if dropdown:
                     validation = {
                         'validate': 'list',
-                        'value': values,
+                        'value': dropdown['values'],
                         'error_title': 'Invalid value',
                         'error_message': 'Value must be in the dropdown list',
                         'ignore_blank': True,
                         'error_type': error_type or 'information',
-                        'show_error': bool(error_type)
-                        and (validate_foreign_keys if foreign_key_validation else True),
+                        'show_error': (
+                            bool(error_type)
+                            and (
+                                dropdown['source'] != 'foreign_key'
+                                or validate_foreign_keys
+                            )
+                        ),
                     }
             if not validation and error_type:
                 # Get column checks
@@ -219,11 +235,8 @@ def write_template(
                     column,
                     valid=True,
                     dtype=dtype,
-                    **constraints,
-                    enum=enum,
-                    foreign_keys=(
-                        foreign_keys.get(column) if validate_foreign_keys else None
-                    )
+                    constraints=constraints,
+                    foreign_keys=foreign_keys if validate_foreign_keys else None,
                 )
                 validation = helpers.build_column_validation(checks)
                 if validation:
@@ -246,11 +259,8 @@ def write_template(
                     column,
                     valid=False,
                     dtype=dtype,
-                    **constraints,
-                    enum=enum,
-                    foreign_keys=(
-                        foreign_keys.get(column) if validate_foreign_keys else None
-                    )
+                    constraints=constraints,
+                    foreign_keys=foreign_keys if validate_foreign_keys else None,
                 )
                 formula = helpers.build_column_condition(checks, valid=False)
                 if formula:
@@ -261,7 +271,6 @@ def write_template(
                         cells,
                         {
                             'type': 'formula',
-                            # NOTE: Move string formatting elsewhere?
                             'criteria': formula,
                             'format': format_invalid,
                         },

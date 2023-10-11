@@ -1,14 +1,14 @@
-from collections import defaultdict
 from contextlib import contextmanager
 from typing import Dict, List, Literal, Optional
 
 try:
     import pygsheets
     import pygsheets.client
+    import pygsheets.exceptions
 except ImportError:
     raise ImportError('Writing Google Sheets templates requires `pygsheets`')
 
-from . import constants, helpers
+from . import helpers
 from .layout import Layout
 
 MAX_NAME_LENGTH: int = 100
@@ -43,7 +43,7 @@ def write_table(
     hide_columns: bool = False,
 ) -> None:
     """
-    Write empty table with header to a Google Sheets sheet.
+    Write an empty table (with header) to a Google Sheets sheet.
 
     Parameters
     ----------
@@ -54,11 +54,10 @@ def write_table(
     freeze_header
         Whether to freeze the header.
     format_header
-        Whether and how to format header cells. See the Google API reference:
+        Whether and how to format header cells. See
         https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/cells?hl=en#cellformat
     comment_header
-        Whether and what text to add as a note to each header cell
-        (one value per cell, None to skip).
+        Whether and what text to add as a note to each header cell (or None to skip).
     hide_columns
         Whether to hide unused columns.
     """
@@ -91,7 +90,7 @@ def write_table(
 
 def write_enum(sheet: pygsheets.Worksheet, values: list, col: int) -> None:
     """
-    Write enumerated values to a Google Sheets sheet.
+    Write enumerated values to a column in a Google Sheets sheet.
 
     Parameters
     ----------
@@ -150,7 +149,7 @@ def write_template(
     hide_columns: bool = False,
 ) -> None:
     """
-    Write package template to a Google Sheets workbook.
+    Write a template for data entry to a Google Sheets workbook.
 
     A sheet with the default name 'Sheet1' is deleted if it is empty.
 
@@ -168,14 +167,8 @@ def write_template(
         whether and what text to add as a note to each column header
         (one value per cell, None to skip).
     dropdowns
-        Whether to display a dropdown if a column meets one of the following conditions:
-
-        * Boolean data type (`field.type: 'boolean'`). Shown as (TRUE, FALSE).
-        * Enumerated value constraint (`field.constraints.enum`).
-        * Foreign key (`resource.schema.foreignKeys`). Foreign keys involving multiple
-          columns are treated as multiple single-column foreign keys. If a column has
-          multiple foreign keys, only the first is used.
-
+        Whether to display a dropdown if a column meets certain conditions.
+        See :meth:`Layout.select_column_dropdown`.
         If selected, additional column constraints will not be enforced by `error_type`,
         but will be by `format_invalid`.
     error_type
@@ -243,17 +236,7 @@ def write_template(
         for resource in package['resources']:
             table = resource['name']
             sheet: pygsheets.Worksheet = book.worksheet_by_title(table)
-
-            # Compile foreign keys by column
-            foreign_keys = defaultdict(list)
-            for key in resource['schema'].get('foreignKeys', []):
-                fields = helpers.to_list(key['fields'])
-                ref_fields = helpers.to_list(key['reference']['fields'])
-                # Composite keys are treated as multiple simple keys
-                for field, ref_field in zip(fields, ref_fields):
-                    foreign_keys[field].append(
-                        (key['reference']['resource'] or table, ref_field)
-                    )
+            foreign_keys = resource['schema'].get('foreignKeys', [])
 
             # For each column
             for field in resource['schema']['fields']:
@@ -263,43 +246,30 @@ def write_template(
                 cells = pygsheets.GridRange(start=code, end=code, worksheet=sheet)
                 cells.set_json({'startRowIndex': 1, **cells.to_json()})
                 dtype = field.get('type', 'any')
-                enum = field.get('constraints', {}).get('enum')
-                constraints = {
-                    helpers.camel_to_snake_case(k): v
-                    for k, v in field.get('constraints', {}).items()
-                    if helpers.camel_to_snake_case(k) in constants.CONSTRAINTS
-                }
+                constraints = field.get('constraints', {})
 
                 # Data validation
                 validation = None
-                range_validation = None
                 # Dropdown
                 if dropdowns:
-                    values = None
-                    if dtype == 'boolean':
-                        values = ['TRUE', 'FALSE']
-                    elif column in foreign_keys:
-                        # TODO: Move to Layout.get_column_dropdown
-                        # NOTE: Uses first foreign key
-                        foreign_table, foreign_column = foreign_keys[column][0]
-                        values = layout.get_column_range(
-                            foreign_table,
-                            foreign_column,
-                            fixed=True,
-                            absolute=True,
-                            indirect=False,
-                        )
-                        range_validation = True
-                    elif enum:
-                        values = layout.get_enum_range(enum, indirect=False)
-                        range_validation = True
-                    if values:
+                    dropdown = layout.select_column_dropdown(
+                        table=table,
+                        column=column,
+                        dtype=dtype,
+                        constraints=constraints,
+                        foreign_keys=foreign_keys,
+                        indirect=False,
+                    )
+                    if dropdown:
+                        range_validation = dropdown['source'] in ('enum', 'foreign_key')
                         validation = {
                             'condition_type': (
                                 'ONE_OF_RANGE' if range_validation else 'ONE_OF_LIST'
                             ),
                             'condition_values': (
-                                [f'={values}'] if range_validation else values
+                                [f"={dropdown['values']}"]
+                                if range_validation
+                                else dropdown['values']
                             ),
                             'strict': error_type == 'stop',
                             'showCustomUi': True,
@@ -312,11 +282,8 @@ def write_template(
                         column,
                         valid=True,
                         dtype=dtype,
-                        **constraints,
-                        enum=enum,
-                        foreign_keys=(
-                            foreign_keys.get(column) if validate_foreign_keys else None
-                        ),
+                        constraints=constraints,
+                        foreign_keys=foreign_keys if validate_foreign_keys else None,
                         indirect=False,
                     )
                     validation = helpers.build_column_validation(checks)
@@ -338,11 +305,8 @@ def write_template(
                         column,
                         valid=False,
                         dtype=dtype,
-                        **constraints,
-                        enum=enum,
-                        foreign_keys=(
-                            foreign_keys.get(column) if validate_foreign_keys else None
-                        ),
+                        constraints=constraints,
+                        foreign_keys=foreign_keys if validate_foreign_keys else None,
                         indirect=True,
                     )
                     formula = helpers.build_column_condition(checks, valid=False)

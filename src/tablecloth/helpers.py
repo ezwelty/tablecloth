@@ -1,6 +1,6 @@
 import functools
 import re
-from typing import List, Literal, Optional, Union
+from typing import List, Literal, Optional, Tuple, Union
 
 from . import constants
 
@@ -11,7 +11,8 @@ def camel_to_snake_case(x: str) -> str:
     """
     Convert camelCase (and CamelCase) to snake_case.
 
-    Examples:
+    Examples
+    --------
     >>> camel_to_snake_case('camelCase')
     'camel_case'
     >>> camel_to_snake_case('CamelCase')
@@ -71,7 +72,7 @@ def column_index_to_code(i: int) -> str:
 
 def column_code_to_index(code: str) -> int:
     """
-    Convert a spreadsheet column code to a column index.
+    Convert a spreadsheet column code to a column index (zero-based).
 
     Examples
     --------
@@ -95,7 +96,7 @@ def column_code_to_index(code: str) -> int:
 
 def row_index_to_code(i: int) -> int:
     """
-    Convert a row index to a spreadsheet row code.
+    Convert a row index (zero-based) to a spreadsheet row code.
 
     Examples
     --------
@@ -110,7 +111,7 @@ def row_index_to_code(i: int) -> int:
 
 def row_code_to_index(code: int) -> int:
     """
-    Convert a spreadsheet row code to a row index.
+    Convert a spreadsheet row code to a row index (zero-based).
 
     Examples
     --------
@@ -124,9 +125,33 @@ def row_code_to_index(code: int) -> int:
 
 
 def column_to_range(
-    col: int, row: int, nrows: int = None, fixed: bool = False, sheet: str = None
+    col: int,
+    row: int,
+    nrows: int = None,
+    fixed: bool = False,
+    sheet: str = None,
+    indirect: bool = False,
 ) -> str:
     """
+    Get a column's cell range in spreadsheet notation.
+
+    Parameters
+    ----------
+    col
+        Column index (zero-based).
+    row
+        Start row index (zero-based).
+    nrows
+        Number of rows to include (or unbounded if None).
+    fixed
+        Whether to use a fixed range (e.g. $A$2:$A).
+    sheet
+        Whether to refer to the range by sheet name (e.g. 'Sheet1'!A2:A).
+    indirect
+        Whether to wrap the range in the `INDIRECT` function.
+        See https://support.google.com/docs/answer/3093377.
+        Ignored if `sheet` is None.
+
     Examples
     --------
     >>> column_to_range(0, 1, nrows=1)
@@ -143,6 +168,8 @@ def column_to_range(
     '$A$2:$A$3'
     >>> column_to_range(0, 1, nrows=2, fixed=True, sheet='Sheet1')
     "'Sheet1'!$A$2:$A$3"
+    >>> column_to_range(0, 1, indirect=True, sheet='Sheet1')
+    'INDIRECT("\\'Sheet1\\'!A2:A")'
     """
     col: str = column_index_to_code(col)
     row: str = row_index_to_code(row)
@@ -156,12 +183,19 @@ def column_to_range(
         cells += f'{prefix}{last_row}'
     if sheet:
         cells = f"'{sheet}'!{cells}"
+        if indirect:
+            cells = f'INDIRECT("{cells}")'
     return cells
 
 
 def format_value(x: Union[bool, int, float, str, None]) -> str:
     """
     Format a singleton value for spreadsheet cells or formulas.
+
+    Parameters
+    ----------
+    x
+        Singleton value.
 
     Examples
     --------
@@ -192,6 +226,13 @@ def format_value(x: Union[bool, int, float, str, None]) -> str:
 def merge_formulas(formulas: List[str], operator: Literal['AND', 'OR']) -> str:
     """
     Merge formulas (returning TRUE or FALSE) by a logical operator.
+
+    Parameters
+    ----------
+    formulas
+        Spreadsheet formulas.
+    operator
+        Logical operator.
 
     Examples
     --------
@@ -229,7 +270,7 @@ def merge_conditions(
 
     Returns
     -------
-    str
+    formula :
         Merged formula.
         All `formulas` which `ignore_blanks` are wrapped in an if statement
         with column and row placeholders (`IF(ISBLANK({col}{row}), ...`).
@@ -277,7 +318,7 @@ def merge_conditions(
     return merge_formulas(fs, operator=operator)
 
 
-def build_column_condition(checks: List[dict], valid: bool) -> Optional[str]:
+def build_column_condition(checks: List[constants.Check], valid: bool) -> Optional[str]:
     """
     Build a column's conditional formatting formula from column checks.
 
@@ -287,11 +328,15 @@ def build_column_condition(checks: List[dict], valid: bool) -> Optional[str]:
     Parameters
     ----------
     checks
-      Column checks.
+        Column checks.
     valid
-      Whether formulas return TRUE if the value is valid or invalid.
-      Returned formula will return TRUE if all formulas return TRUE (valid),
-      or TRUE if any formula returns TRUE (invalid).
+        Whether `formulas` return TRUE if the value is valid (True) or invalid (False).
+
+    Returns
+    -------
+    formula :
+        Formula that returns TRUE if all formulas return TRUE (`valid` is True),
+        or TRUE if any formula returns TRUE (`valid` is False).
     """
     if not checks:
         return None
@@ -318,7 +363,7 @@ def readable_join(values: List[str]) -> str:
     return ', '.join(values[:-1]) + ', and ' + values[-1]
 
 
-def build_column_validation(checks: List[dict]) -> Optional[constants.Check]:
+def build_column_validation(checks: List[constants.Check]) -> Optional[constants.Check]:
     """
     Build a column's validation from column checks.
 
@@ -327,8 +372,8 @@ def build_column_validation(checks: List[dict]) -> Optional[constants.Check]:
 
     Parameters
     ----------
-    checks:
-      Column checks. Formulas should return TRUE if value is valid.
+    checks
+        Column checks. Formulas should return TRUE if value is valid.
     """
     if not checks:
         return None
@@ -339,3 +384,35 @@ def build_column_validation(checks: List[dict]) -> Optional[constants.Check]:
         'message': f'Value must be {readable_join(messages)}',
         'ignore_blank': True,
     }
+
+
+def reduce_foreign_keys(
+    foreign_keys: List[constants.ForeignKey], table: str, column: str
+) -> List[Tuple[Optional[str], str]]:
+    """
+    Reduce foreign keys to the unique set of simple foreign keys for the given column.
+
+    Example
+    -------
+    >>> foreign_keys = [
+    ...     {'fields': ['a'], 'reference': {'resource': 'x', 'fields': ['aa']}},
+    ...     {'fields': ['b'], 'reference': {'resource': 'x', 'fields': ['bb']}},
+    ...     {'fields': ['b', 'a'], 'reference': {'resource': 'y', 'fields': ['b', 'a']}}
+    ... ]
+    >>> reduce_foreign_keys(foreign_keys, table='x', column='a')
+    [(None, 'aa'), ('y', 'a')]
+    """
+    keys = []
+    for foreign_key in foreign_keys or []:
+        columns = to_list(foreign_key['fields'])
+        foreign_columns = to_list(foreign_key['reference']['fields'])
+        try:
+            i = columns.index(column)
+        except ValueError:
+            continue
+        foreign_column = foreign_columns[i]
+        foreign_table = foreign_key['reference'].get('resource') or table
+        key = (None if foreign_table == table else foreign_table, foreign_column)
+        if key not in keys:
+            keys.append(key)
+    return keys
