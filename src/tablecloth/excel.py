@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 from pathlib import Path
-from typing import Dict, List, Literal, Optional, Union
+from typing import Dict, List, Literal, Optional, Union, cast
 
 try:
     import xlsxwriter
@@ -8,7 +10,7 @@ try:
 except ImportError:
     raise ImportError('Writing Excel templates requires `xlsxwriter`')
 
-from . import helpers
+from . import constants, helpers
 from .layout import Layout
 
 MAX_COLS: int = 16384
@@ -25,9 +27,9 @@ def write_table(
     sheet: xlsxwriter.worksheet.Worksheet,
     header: List[str],
     freeze_header: bool = False,
-    format_header: xlsxwriter.format.Format = None,
-    comment_header: List[str] = None,
-    format_comments: dict = None,
+    format_header: xlsxwriter.format.Format | None = None,
+    comment_header: List[str] | None = None,
+    format_comments: dict | None = None,
     hide_columns: bool = False,
 ) -> None:
     """
@@ -92,11 +94,11 @@ def write_enum(sheet: xlsxwriter.worksheet.Worksheet, values: list, col: int) ->
 
 def write_template(
     package: dict,
-    path: Union[str, Path] = None,
+    path: Union[str, Path] | None = None,
     enum_sheet: str = 'lists',
-    header_comments: Dict[str, List[str]] = None,
+    header_comments: Dict[str, List[str]] | None = None,
     dropdowns: bool = True,
-    error_type: Literal['information', 'warning', 'stop'] = None,
+    error_type: Literal['information', 'warning', 'stop'] | None = None,
     validate_foreign_keys: bool = True,
     format_invalid: Optional[dict] = {'bg_color': '#ffc7ce'},
     format_header: Optional[dict] = {'bold': True, 'bg_color': '#d3d3d3'},
@@ -155,18 +157,18 @@ def write_template(
     book = xlsxwriter.Workbook(filename=path)
     # Register formats
     if format_invalid:
-        format_invalid: xlsxwriter.format.Format = book.add_format(format_invalid)
+        invalid_format = book.add_format(format_invalid)
     if format_header:
-        format_header: xlsxwriter.format.Format = book.add_format(format_header)
+        header_format = book.add_format(format_header)
 
     # ---- Write tables
-    for info in layout.tables:
-        sheet = book.add_worksheet(info['sheet'])
+    for table_props in layout.tables:
+        sheet: xlsxwriter.worksheet.Worksheet = book.add_worksheet(table_props['sheet'])
         write_table(
             sheet=sheet,
-            header=info['columns'],
-            comment_header=(header_comments or {}).get(info['table']),
-            format_header=format_header,
+            header=table_props['columns'],
+            comment_header=(header_comments or {}).get(table_props['table']),
+            format_header=header_format,
             format_comments=format_comments,
             freeze_header=freeze_header,
             hide_columns=hide_columns,
@@ -176,14 +178,14 @@ def write_template(
     if (dropdowns or error_type or format_invalid) and layout.enums:
         sheet = book.add_worksheet(layout.enum_sheet)
         sheet.hide()
-        for info in layout.enums:
-            write_enum(sheet=sheet, values=info['values'], col=info['col'])
+        for enum_props in layout.enums:
+            write_enum(sheet=sheet, values=enum_props['values'], col=enum_props['col'])
 
     # --- Add column checks
     for resource in package['resources']:
         table = resource['name']
         sheet_name = layout.get_table(table)['sheet']
-        sheet: xlsxwriter.worksheet.Worksheet = book.get_worksheet_by_name(sheet_name)
+        sheet = book.get_worksheet_by_name(sheet_name)
         foreign_keys = resource['schema'].get('foreignKeys', [])
 
         # For each column
@@ -191,12 +193,15 @@ def write_template(
             column = field['name']
             cells = layout.get_column_range(table, column)
             dtype = field.get('type', 'any')
-            constraints = {
-                key: value
-                for key, value in field.get('constraints', {}).items()
-                # No regex support in Excel
-                if key not in ['pattern']
-            }
+            constraints = cast(
+                constants.Constraints,
+                {
+                    key: value
+                    for key, value in field.get('constraints', {}).items()
+                    # No regex support in Excel
+                    if key not in ['pattern']
+                },
+            )
 
             # Data validation
             validation = None
@@ -236,14 +241,14 @@ def write_template(
                     constraints=constraints,
                     foreign_keys=foreign_keys if validate_foreign_keys else None,
                 )
-                validation = helpers.build_column_validation(checks)
-                if validation:
+                check = helpers.build_column_validation(checks)
+                if check:
                     validation = {
                         'validate': 'custom',
-                        'value': validation['formula'],
+                        'value': check['formula'],
                         'error_title': 'Invalid value',
-                        'error_message': validation['message'],
-                        'ignore_blank': validation['ignore_blank'],
+                        'error_message': check['message'],
+                        'ignore_blank': check['ignore_blank'],
                         'error_type': error_type,
                         'show_error': bool(error_type),
                     }
@@ -271,9 +276,10 @@ def write_template(
                         options={
                             'type': 'formula',
                             'criteria': formula,
-                            'format': format_invalid,
+                            'format': invalid_format,
                         },
                     )
     if path is None:
         return book
     book.close()
+    return None

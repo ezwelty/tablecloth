@@ -21,16 +21,21 @@ repos:
       pass_filenames: false
     - id: format-isort
       name: isort
-      entry: poetry run isort src tests
+      entry: poetry run isort
       language: system
       types: [python]
     - id: format-black
       name: black
-      entry: poetry run black --skip-string-normalization src tests
+      entry: poetry run black --skip-string-normalization
       language: system
       types: [python]
     - id: lint
       name: flake8
-      entry: poetry run flake8 src tests
+      entry: poetry run flake8
+      language: system
+      types: [python]
+    - id: typecheck
+      name: mypy
+      entry: poetry run mypy
       language: system
       types: [python]

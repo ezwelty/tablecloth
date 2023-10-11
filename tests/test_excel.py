@@ -4,9 +4,10 @@ from pathlib import Path
 from typing import Any, List, Union
 
 import pytest
+import xlsxwriter
 import yaml
 
-import tablecloth
+import tablecloth.excel
 
 
 def write_indempotent_template(path: Union[str, Path], **kwargs: Any) -> None:
@@ -20,7 +21,9 @@ def write_indempotent_template(path: Union[str, Path], **kwargs: Any) -> None:
         ]
         for resource in package['resources']
     }
-    book = tablecloth.excel.write_template(package, header_comments=comments, **kwargs)
+    book: xlsxwriter.Workbook = tablecloth.excel.write_template(
+        package, header_comments=comments, **kwargs
+    )
     book.set_properties({'created': datetime.datetime(2000, 1, 1)})
     book.filename = path
     book.close()
@@ -29,14 +32,14 @@ def write_indempotent_template(path: Union[str, Path], **kwargs: Any) -> None:
 def read_xlsx_as_string(path: Union[str, Path]) -> str:
     def read_children(root: zipfile.Path) -> str:
         text = ''
-        paths: List[zipfile.Path] = sorted(root.iterdir(), key=lambda x: x.name)
-        for path in paths:
-            if path.is_dir():
-                text += read_children(path)
+        inner_paths: List[zipfile.Path] = sorted(root.iterdir(), key=lambda x: x.name)
+        for inner_path in inner_paths:
+            if inner_path.is_dir():
+                text += read_children(inner_path)
             else:
-                text += f'##### {path.at} #####\n\n'
+                text += f'##### {inner_path.name} #####\n\n'
                 # Cheap pretty print
-                text += path.read_text(encoding='utf-8').replace('><', '>\n<')
+                text += inner_path.read_text(encoding='utf-8').replace('><', '>\n<')
                 text += '\n\n'
         return text
 

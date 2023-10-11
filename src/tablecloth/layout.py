@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 import re
 import warnings
-from typing import Any, List, Literal, Optional, Type
+from typing import Any, List, Literal, Optional, Type, cast
 
 from . import constants, helpers
 
@@ -28,8 +30,8 @@ class Layout:
     def __init__(
         self,
         enum_sheet: str = 'lists',
-        max_rows: int = None,
-        max_name_length: int = None,
+        max_rows: int | None = None,
+        max_name_length: int | None = None,
     ) -> None:
         self.tables: List[constants.Table] = []
         self.enums: List[constants.Enum] = []
@@ -64,7 +66,9 @@ class Layout:
                     layout.set_enum(values)
         return layout
 
-    def set_table(self, table: str, columns: List[str], sheet: str = None) -> None:
+    def set_table(
+        self, table: str, columns: List[str], sheet: str | None = None
+    ) -> None:
         """
         Add a new table to a new sheet.
 
@@ -89,7 +93,7 @@ class Layout:
             raise ValueError(f'Columns {columns} are not unique')
         self.tables.append({'sheet': sheet, 'table': table, 'columns': columns})
 
-    def get_table(self, table: str) -> dict:
+    def get_table(self, table: str) -> constants.Table:
         """Get table properties by name."""
         for x in self.tables:
             if x['table'] == table:
@@ -112,7 +116,7 @@ class Layout:
             col = 0
         self.enums.append({'values': values, 'col': col})
 
-    def get_enum(self, values: list) -> dict:
+    def get_enum(self, values: list) -> constants.Enum:
         """Get enum properties by name."""
         for x in self.enums:
             if x['values'] == values:
@@ -169,7 +173,7 @@ class Layout:
         self,
         table: str,
         column: str,
-        nrows: int = None,
+        nrows: int | None = None,
         absolute: bool = False,
         fixed: bool = False,
         indirect: bool = False,
@@ -209,9 +213,9 @@ class Layout:
         self,
         table: str,
         column: str,
-        dtype: str = None,
-        constraints: constants.Constraints = None,
-        foreign_keys: List[constants.ForeignKey] = None,
+        dtype: str | None = None,
+        constraints: constants.Constraints | None = None,
+        foreign_keys: List[constants.ForeignKey] | None = None,
         indirect: bool = False,
     ) -> Optional[constants.Dropdown]:
         """
@@ -284,9 +288,9 @@ class Layout:
         table: str,
         column: str,
         valid: bool,
-        dtype: str = None,
-        constraints: constants.Constraints = None,
-        foreign_keys: List[constants.ForeignKey] = None,
+        dtype: str | None = None,
+        constraints: constants.Constraints | None = None,
+        foreign_keys: List[constants.ForeignKey] | None = None,
         indirect: bool = False,
     ) -> List[constants.Check]:
         """
@@ -334,57 +338,59 @@ class Layout:
 
         # Field type
         if dtype in constants.TYPES:
-            check = constants.TYPES[dtype]
-            checks.append(
-                {
-                    'formula': check[f].format(**defaults),
-                    'message': check['message'],
-                    'ignore_blank': check['ignore_blank'],
-                }
-            )
+            template = constants.TYPES[dtype]
+            check: constants.Check = {
+                'formula': template[f].format(**defaults),
+                'message': template['message'],
+                'ignore_blank': template['ignore_blank'],
+            }
+            checks.append(check)
 
         # Format constraints
-        constraints = {
-            helpers.camel_to_snake_case(key): value
-            for key, value in (constraints or {}).items()
-            if value not in (None, False, '', [])
-        }
+        clean_constraints = cast(
+            constants.Constraints,
+            {
+                helpers.camel_to_snake_case(key): value
+                for key, value in (constraints or {}).items()
+                if value not in (None, False, '', [])
+            },
+        )
 
         # Field constraints (except enum)
-        for key, value in constraints.items():
+        for key, value in clean_constraints.items():
             if key not in constants.CONSTRAINTS:
                 continue
-            check = constants.CONSTRAINTS[key]
-            checks.append(
-                {
-                    'formula': check[f].format(**defaults, value=value),
-                    'message': check['message'].format(value=value),
-                    'ignore_blank': check['ignore_blank'],
-                }
-            )
+            template = constants.CONSTRAINTS[key]
+            check = {
+                'formula': template[f].format(**defaults, value=value),
+                'message': template['message'].format(value=value),
+                'ignore_blank': template['ignore_blank'],
+            }
+            checks.append(check)
 
         # Range lookups
-        check = constants.IN_RANGE
+        template = constants.IN_RANGE
         # enum
-        if 'enum' in constraints:
-            enum_range = self.get_enum_range(constraints['enum'], indirect=indirect)
-            checks.append(
-                {
-                    'formula': check[f].format(**defaults, range=enum_range),
-                    'message': check['message'].format(range=enum_range),
-                    'ignore_blank': check['ignore_blank'],
-                }
+        if 'enum' in clean_constraints:
+            enum_range = self.get_enum_range(
+                values=clean_constraints['enum'], indirect=indirect
             )
+            check = {
+                'formula': template[f].format(**defaults, range=enum_range),
+                'message': template['message'].format(range=enum_range),
+                'ignore_blank': template['ignore_blank'],
+            }
+            checks.append(check)
         # foreign keys
-        for key in foreign_keys or []:
-            columns = helpers.to_list(key['fields'])
-            foreign_columns = helpers.to_list(key['reference']['fields'])
+        for foreign_key in foreign_keys or []:
+            local_columns = helpers.to_list(foreign_key['fields'])
+            foreign_columns = helpers.to_list(foreign_key['reference']['fields'])
             try:
-                i = columns.index(column)
+                i = local_columns.index(column)
             except ValueError:
                 continue
             foreign_column = foreign_columns[i]
-            foreign_table = key['reference'].get('resource') or table
+            foreign_table = foreign_key['reference'].get('resource') or table
             column_range = self.get_column_range(
                 foreign_table,
                 foreign_column,
@@ -392,11 +398,10 @@ class Layout:
                 fixed=True,
                 indirect=indirect,
             )
-            checks.append(
-                {
-                    'formula': check[f].format(**defaults, range=column_range),
-                    'message': check['message'].format(range=column_range),
-                    'ignore_blank': check['ignore_blank'],
-                }
-            )
+            check = {
+                'formula': template[f].format(**defaults, range=column_range),
+                'message': template['message'].format(range=column_range),
+                'ignore_blank': template['ignore_blank'],
+            }
+            checks.append(check)
         return checks

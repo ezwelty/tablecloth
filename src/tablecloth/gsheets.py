@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 from contextlib import contextmanager
-from typing import Dict, List, Literal, Optional
+from typing import Dict, Iterator, List, Literal, Optional
 
 try:
     import pygsheets
@@ -19,7 +21,7 @@ DEFAULT_SHEET_NAME: str = 'Sheet1'
 
 
 @contextmanager
-def batched(client: pygsheets.client.Client) -> None:
+def batched(client: pygsheets.client.Client) -> Iterator[pygsheets.client.Client]:
     """
     Context manager for updating Google Sheets in batch mode.
     """
@@ -38,8 +40,8 @@ def write_table(
     sheet: pygsheets.Worksheet,
     header: List[str],
     freeze_header: bool = False,
-    format_header: dict = None,
-    comment_header: List[str] = None,
+    format_header: dict | None = None,
+    comment_header: List[str] | None = None,
     hide_columns: bool = False,
 ) -> None:
     """
@@ -134,9 +136,9 @@ def write_template(
     package: dict,
     book: pygsheets.Spreadsheet,
     enum_sheet: str = 'lists',
-    header_comments: Dict[str, List[str]] = None,
+    header_comments: Dict[str, List[str]] | None = None,
     dropdowns: bool = True,
-    error_type: Literal['warning', 'stop'] = None,
+    error_type: Literal['warning', 'stop'] | None = None,
     validate_foreign_keys: bool = True,
     format_invalid: Optional[dict] = {
         'backgroundColorStyle': {'rgbColor': {'red': 1, 'green': 0.8, 'blue': 0.8}}
@@ -203,12 +205,12 @@ def write_template(
     )
 
     # ---- Write tables
-    for info in layout.tables:
-        sheet = book.add_worksheet(info['sheet'])
+    for table_props in layout.tables:
+        sheet: pygsheets.Worksheet = book.add_worksheet(table_props['sheet'])
         write_table(
             sheet=sheet,
-            header=info['columns'],
-            comment_header=(header_comments or {}).get(info['table']),
+            header=table_props['columns'],
+            comment_header=(header_comments or {}).get(table_props['table']),
             format_header=format_header,
             freeze_header=freeze_header,
             hide_columns=hide_columns,
@@ -218,15 +220,15 @@ def write_template(
     if (dropdowns or error_type or format_invalid) and layout.enums:
         sheet = book.add_worksheet(layout.enum_sheet)
         sheet.hidden = True
-        for info in layout.enums:
-            write_enum(sheet=sheet, values=info['values'], col=info['col'])
+        for enum_props in layout.enums:
+            write_enum(sheet=sheet, values=enum_props['values'], col=enum_props['col'])
 
     # --- Add column checks
     with batched(book.client):
         for resource in package['resources']:
             table = resource['name']
             sheet_name = layout.get_table(table)['sheet']
-            sheet: pygsheets.Worksheet = book.worksheet_by_title(sheet_name)
+            sheet = book.worksheet_by_title(sheet_name)
             foreign_keys = resource['schema'].get('foreignKeys', [])
 
             # For each column
@@ -277,14 +279,14 @@ def write_template(
                         foreign_keys=foreign_keys if validate_foreign_keys else None,
                         indirect=False,
                     )
-                    validation = helpers.build_column_validation(checks)
-                    if validation:
+                    check = helpers.build_column_validation(checks)
+                    if check:
                         validation = {
                             'condition_type': 'CUSTOM_FORMULA',
-                            'condition_values': [f"={validation['formula']}"],
+                            'condition_values': [f"={check['formula']}"],
                             'strict': error_type == 'stop',
                             'showCustomUi': False,
-                            'inputMessage': validation['message'],
+                            'inputMessage': check['message'],
                         }
                 if validation:
                     sheet.set_data_validation(grange=cells, **validation)

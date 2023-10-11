@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import functools
 import re
 from typing import List, Literal, Optional, Tuple, Union
@@ -127,9 +129,9 @@ def row_code_to_index(code: int) -> int:
 def column_to_range(
     col: int,
     row: int,
-    nrows: int = None,
+    nrows: int | None = None,
     fixed: bool = False,
-    sheet: str = None,
+    sheet: str | None = None,
     indirect: bool = False,
 ) -> str:
     """
@@ -171,15 +173,15 @@ def column_to_range(
     >>> column_to_range(0, 1, indirect=True, sheet='Sheet1')
     'INDIRECT("\\'Sheet1\\'!A2:A")'
     """
-    col: str = column_index_to_code(col)
-    row: str = row_index_to_code(row)
+    col_code = column_index_to_code(col)
+    row_code = row_index_to_code(row)
     prefix = '$' if fixed else ''
-    cells = f'{prefix}{col}{prefix}{row}'
+    cells = f'{prefix}{col_code}{prefix}{row_code}'
     if nrows == 1:
         return cells
-    cells += f':{prefix}{col}'
+    cells += f':{prefix}{col_code}'
     if nrows is not None:
-        last_row = row + nrows - 1
+        last_row = row + nrows
         cells += f'{prefix}{last_row}'
     if sheet:
         cells = f"'{sheet}'!{cells}"
@@ -253,7 +255,7 @@ def merge_formulas(formulas: List[str], operator: Literal['AND', 'OR']) -> str:
 
 
 def merge_conditions(
-    formulas: List[str], valid: bool, ignore_blanks: List[bool] = None
+    formulas: List[str], valid: bool, ignore_blanks: List[bool] | None = None
 ) -> str:
     """
     Merge formulas (returning TRUE or FALSE) for use in conditional formatting.
