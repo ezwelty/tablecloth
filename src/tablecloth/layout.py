@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import re
 import warnings
-from typing import Any, List, Literal, Optional, Type, cast
+from typing import Any, List, Literal, Type, cast
 
 from . import constants, helpers
 
@@ -217,7 +217,7 @@ class Layout:
         constraints: constants.Constraints | None = None,
         foreign_keys: List[constants.ForeignKey] | None = None,
         indirect: bool = False,
-    ) -> Optional[constants.Dropdown]:
+    ) -> constants.Dropdown | None:
         """
         Whether and what to use as a dropdown for a column's data validation.
 

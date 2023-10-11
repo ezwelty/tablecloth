@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import functools
 import re
-from typing import List, Literal, Optional, Tuple, Union
+from typing import List, Literal, Tuple
 
 from . import constants
 
@@ -26,7 +26,7 @@ def camel_to_snake_case(x: str) -> str:
     return pattern.sub('_', x).lower()
 
 
-def to_list(x: Optional[Union[str, list]]) -> list:
+def to_list(x: str | list | None) -> list:
     """
     Cast to list, wrapping singleton string as first element.
 
@@ -190,7 +190,7 @@ def column_to_range(
     return cells
 
 
-def format_value(x: Union[bool, int, float, str, None]) -> str:
+def format_value(x: bool | int | float | str | None) -> str:
     """
     Format a singleton value for spreadsheet cells or formulas.
 
@@ -322,7 +322,7 @@ def merge_conditions(
 
 def build_column_condition(
     checks: List[constants.Check], valid: bool, col: str, row: int = 2
-) -> Optional[str]:
+) -> str | None:
     """
     Build a column's conditional formatting formula from column checks.
 
@@ -374,7 +374,7 @@ def readable_join(values: List[str]) -> str:
     return ', '.join(values[:-1]) + ', and ' + values[-1]
 
 
-def build_column_validation(checks: List[constants.Check]) -> Optional[constants.Check]:
+def build_column_validation(checks: List[constants.Check]) -> constants.Check | None:
     """
     Build a column's validation from column checks.
 
@@ -399,7 +399,7 @@ def build_column_validation(checks: List[constants.Check]) -> Optional[constants
 
 def reduce_foreign_keys(
     foreign_keys: List[constants.ForeignKey], table: str, column: str
-) -> List[Tuple[Optional[str], str]]:
+) -> List[Tuple[str | None, str]]:
     """
     Reduce foreign keys to the unique set of simple foreign keys for the given column.
 

@@ -1,7 +1,9 @@
+from __future__ import annotations
+
 import datetime
 import zipfile
 from pathlib import Path
-from typing import Any, List, Union
+from typing import Any, List
 
 import pytest
 import xlsxwriter
@@ -10,7 +12,7 @@ import yaml
 import tablecloth.excel
 
 
-def write_indempotent_template(path: Union[str, Path], **kwargs: Any) -> None:
+def write_indempotent_template(path: str | Path, **kwargs: Any) -> None:
     # Load package descriptor
     package_path = Path(__file__).parent / 'datapackage.yaml'
     package = yaml.safe_load(package_path.read_text(encoding='utf-8'))
@@ -29,7 +31,7 @@ def write_indempotent_template(path: Union[str, Path], **kwargs: Any) -> None:
     book.close()
 
 
-def read_xlsx_as_string(path: Union[str, Path]) -> str:
+def read_xlsx_as_string(path: str | Path) -> str:
     def read_children(root: zipfile.Path) -> str:
         text = ''
         inner_paths: List[zipfile.Path] = sorted(root.iterdir(), key=lambda x: x.name)

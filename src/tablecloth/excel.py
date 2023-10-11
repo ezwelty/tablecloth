@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Dict, List, Literal, Optional, Union, cast
+from typing import Dict, List, Literal, cast
 
 try:
     import xlsxwriter
@@ -94,18 +94,18 @@ def write_enum(sheet: xlsxwriter.worksheet.Worksheet, values: list, col: int) ->
 
 def write_template(
     package: dict,
-    path: Union[str, Path] | None = None,
+    path: str | Path | None = None,
     enum_sheet: str = 'lists',
     header_comments: Dict[str, List[str]] | None = None,
     dropdowns: bool = True,
     error_type: Literal['information', 'warning', 'stop'] | None = None,
     validate_foreign_keys: bool = True,
-    format_invalid: Optional[dict] = {'bg_color': '#ffc7ce'},
-    format_header: Optional[dict] = {'bold': True, 'bg_color': '#d3d3d3'},
-    format_comments: Optional[dict] = {'font_size': 11, 'x_scale': 2, 'y_scale': 2},
+    format_invalid: dict | None = {'bg_color': '#ffc7ce'},
+    format_header: dict | None = {'bold': True, 'bg_color': '#d3d3d3'},
+    format_comments: dict | None = {'font_size': 11, 'x_scale': 2, 'y_scale': 2},
     freeze_header: bool = True,
     hide_columns: bool = False,
-) -> Optional[xlsxwriter.Workbook]:
+) -> xlsxwriter.Workbook | None:
     """
     Write a template for data entry to a Microsoft Excel workbook.
 

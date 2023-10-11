@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from contextlib import contextmanager
-from typing import Dict, Iterator, List, Literal, Optional
+from typing import Dict, Iterator, List, Literal
 
 try:
     import pygsheets
@@ -140,10 +140,12 @@ def write_template(
     dropdowns: bool = True,
     error_type: Literal['warning', 'stop'] | None = None,
     validate_foreign_keys: bool = True,
-    format_invalid: Optional[dict] = {
+    format_invalid: dict
+    | None = {
         'backgroundColorStyle': {'rgbColor': {'red': 1, 'green': 0.8, 'blue': 0.8}}
     },
-    format_header: Optional[dict] = {
+    format_header: dict
+    | None = {
         'textFormat': {'bold': True},
         'backgroundColorStyle': {'rgbColor': {'red': 0.8, 'green': 0.8, 'blue': 0.8}},
     },

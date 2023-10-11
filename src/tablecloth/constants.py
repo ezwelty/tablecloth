@@ -1,4 +1,6 @@
-from typing import Dict, List, Literal, Optional, TypedDict, Union
+from __future__ import annotations
+
+from typing import Dict, List, Literal, TypedDict
 
 
 class Table(TypedDict):
@@ -48,7 +50,7 @@ class CheckTemplate(TypedDict):
 class Dropdown(TypedDict):
     """Column dropdown."""
 
-    values: Union[List[str], str]
+    values: List[str] | str
     """Dropdown values as a list or cell range."""
     source: Literal['boolean', 'foreign_key', 'enum']
     """Source of dropdown values."""
@@ -57,16 +59,16 @@ class Dropdown(TypedDict):
 class ForeignKeyReference(TypedDict):
     """Foreign key reference."""
 
-    resource: Optional[str]
+    resource: str | None
     """Table name."""
-    fields: Union[str, List[str]]
+    fields: str | List[str]
     """Column name(s)."""
 
 
 class ForeignKey(TypedDict):
     """Foreign key (https://specs.frictionlessdata.io/table-schema/#foreign-keys)."""
 
-    fields: Union[str, List[str]]
+    fields: str | List[str]
     """Local column name(s)."""
     reference: ForeignKeyReference
     """Foreign reference."""
@@ -85,13 +87,13 @@ class Constraints(TypedDict, total=False):
     """Minimum length (of string)."""
     max_length: int
     """Maximum length (of string)."""
-    minimum: Union[int, float]
+    minimum: int | float
     """Minimum value."""
-    maximum: Union[int, float]
+    maximum: int | float
     """Maximum value."""
     pattern: str
     """Regular expression."""
-    enum: Union[List[int], List[float], List[str]]
+    enum: List[int] | List[float] | List[str]
     """List of allowed values."""
 
 
