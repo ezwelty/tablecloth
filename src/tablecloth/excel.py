@@ -143,6 +143,9 @@ def write_template(
     format_header
         Formatting for header cells.
         See https://xlsxwriter.readthedocs.io/format.html.
+    format_comments
+        Whether and how to format header comments. See
+        https://xlsxwriter.readthedocs.io/working_with_cell_comments.html#cell-comments.
     freeze_header
         Whether to freeze the header.
     hide_columns

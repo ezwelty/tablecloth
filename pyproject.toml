@@ -31,6 +31,7 @@ flake8-annotations = "^3.0.0"
 mypy = "^1.6.0"
 types-PyYAML = "^6.0.12.12"
 flake8-docstrings = "^1.7.0"
+pydoclint = {version = "^0.3.3", extras = ["flake8"]}
 
 [build-system]
 requires = ["poetry-core"]

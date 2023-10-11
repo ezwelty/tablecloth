@@ -12,12 +12,8 @@ class Layout:
     """
     Tabular spreadsheet layout.
 
-    Attributes
+    Parameters
     ----------
-    tables
-        Tables added by :meth:`set_table`.
-    enums
-        Enums added by :meth:`set_enum`.
     enum_sheet
         Name of the sheet used to store enums.
     max_rows
@@ -26,6 +22,13 @@ class Layout:
         Otherwise, they are bounded (e.g. `A2:A1000`).
     max_name_length
         Maximum length of sheet names (in characters).
+
+    Attributes
+    ----------
+    tables
+        Tables added by :meth:`set_table`.
+    enums
+        Enums added by :meth:`set_enum`.
     """
 
     def __init__(
@@ -82,6 +85,17 @@ class Layout:
         sheet
             Sheet name (`table` by default).
             Must not already be taken by a table or enum.
+
+        Raises
+        ------
+        ValueError
+            Table `table` already exists.
+        ValueError
+            Sheet `sheet` already exists.
+        ValueError
+            Sheet name cannot be longer than :attr:`max_name_length`.
+        ValueError
+            Columns `columns` are not unique.
         """
         sheet = sheet or table
         if table in [x['table'] for x in self.tables]:
