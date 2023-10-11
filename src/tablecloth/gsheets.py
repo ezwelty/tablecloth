@@ -1,3 +1,4 @@
+"""Support for Google Sheets."""
 from __future__ import annotations
 
 from contextlib import contextmanager
@@ -22,9 +23,7 @@ DEFAULT_SHEET_NAME: str = 'Sheet1'
 
 @contextmanager
 def batched(client: pygsheets.client.Client) -> Iterator[pygsheets.client.Client]:
-    """
-    Context manager for updating Google Sheets in batch mode.
-    """
+    """Context manager for updating Google Sheets in batch mode."""
     client.set_batch_mode(True)
     try:
         yield client

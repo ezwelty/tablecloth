@@ -1,3 +1,4 @@
+"""Helper functions."""
 from __future__ import annotations
 
 import functools
@@ -134,7 +135,7 @@ def column_to_range(
     sheet: str | None = None,
     indirect: bool = False,
 ) -> str:
-    """
+    r"""
     Get a column's cell range in spreadsheet notation.
 
     Parameters
@@ -171,7 +172,7 @@ def column_to_range(
     >>> column_to_range(0, 1, nrows=2, fixed=True, sheet='Sheet1')
     "'Sheet1'!$A$2:$A$3"
     >>> column_to_range(0, 1, indirect=True, sheet='Sheet1')
-    'INDIRECT("\\'Sheet1\\'!A2:A")'
+    'INDIRECT("\'Sheet1\'!A2:A")'
     """
     col_code = column_index_to_code(col)
     row_code = row_index_to_code(row)

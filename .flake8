@@ -1,6 +1,8 @@
 [flake8]
 max-line-length = 88
-# ANN101: Missing type annotation for self in method
-# ANN401: Dynamically typed expressions (typing.Any) are disallowed
+# ANN101 Missing type annotation for self in method
+# ANN401 Dynamically typed expressions (typing.Any) are disallowed
+# D202 No blank lines allowed after function docstring
 # W503 line break before binary operator
-ignore = ANN101, ANN401, W503
+ignore = ANN101, ANN401, D202, W503
+docstring-convention = numpy

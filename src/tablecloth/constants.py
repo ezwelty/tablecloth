@@ -1,3 +1,4 @@
+"""Custom types and other constants."""
 from __future__ import annotations
 
 from typing import Dict, List, Literal, TypedDict
@@ -66,7 +67,11 @@ class ForeignKeyReference(TypedDict):
 
 
 class ForeignKey(TypedDict):
-    """Foreign key (https://specs.frictionlessdata.io/table-schema/#foreign-keys)."""
+    """
+    Foreign key.
+
+    See https://specs.frictionlessdata.io/table-schema/#foreign-keys.
+    """
 
     fields: str | List[str]
     """Local column name(s)."""
@@ -76,7 +81,9 @@ class ForeignKey(TypedDict):
 
 class Constraints(TypedDict, total=False):
     """
-    Column constraints (https://specs.frictionlessdata.io/table-schema/#constraints).
+    Column constraints.
+
+    See https://specs.frictionlessdata.io/table-schema/#constraints.
     """
 
     required: bool

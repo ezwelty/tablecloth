@@ -1,3 +1,4 @@
+"""Lay tables out onto a spreadsheet."""
 from __future__ import annotations
 
 import re

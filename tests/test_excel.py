@@ -1,3 +1,4 @@
+"""Test cases for the excel module."""
 from __future__ import annotations
 
 import datetime
@@ -13,6 +14,18 @@ import tablecloth.excel
 
 
 def write_indempotent_template(path: str | Path, **kwargs: Any) -> None:
+    """
+    Write an indempotent Excel template for the test Tabular Data Package.
+
+    Sets the internal creation date of the file to 2000-01-01 so that it never changes.
+
+    Parameters
+    ----------
+    path
+        Path of Microsoft Excel file.
+    **kwargs
+        Arguments to :func:`tablecloth.excel.write_template`.
+    """
     # Load package descriptor
     package_path = Path(__file__).parent / 'datapackage.yaml'
     package = yaml.safe_load(package_path.read_text(encoding='utf-8'))
@@ -32,6 +45,8 @@ def write_indempotent_template(path: str | Path, **kwargs: Any) -> None:
 
 
 def read_xlsx_as_string(path: str | Path) -> str:
+    """Read an Excel file as a string."""
+
     def read_children(root: zipfile.Path) -> str:
         text = ''
         inner_paths: List[zipfile.Path] = sorted(root.iterdir(), key=lambda x: x.name)
@@ -61,6 +76,7 @@ def read_xlsx_as_string(path: str | Path) -> str:
     ],
 )
 def test_writes_template(name: str, arguments: dict) -> None:
+    """It writes an Excel file that is identical to the expected on."""
     expected = Path(__file__).parent / 'xlsx' / f'{name}.xlsx'
     actual = Path(__file__).parent / 'xlsx' / f'{name}-test.xlsx'
     write_indempotent_template(path=actual, **arguments)
