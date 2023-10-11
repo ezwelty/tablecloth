@@ -318,7 +318,9 @@ def merge_conditions(
     return merge_formulas(fs, operator=operator)
 
 
-def build_column_condition(checks: List[constants.Check], valid: bool) -> Optional[str]:
+def build_column_condition(
+    checks: List[constants.Check], valid: bool, col: str, row: int = 2
+) -> Optional[str]:
     """
     Build a column's conditional formatting formula from column checks.
 
@@ -331,6 +333,10 @@ def build_column_condition(checks: List[constants.Check], valid: bool) -> Option
         Column checks.
     valid
         Whether `formulas` return TRUE if the value is valid (True) or invalid (False).
+    col
+        Column code.
+    row
+        Start row code (1-based).
 
     Returns
     -------
@@ -340,9 +346,12 @@ def build_column_condition(checks: List[constants.Check], valid: bool) -> Option
     """
     if not checks:
         return None
-    formulas = [x['formula'] for x in checks]
-    ignore_blanks = [x['ignore_blank'] for x in checks]
-    return merge_conditions(formulas, valid=valid, ignore_blanks=ignore_blanks)
+    formula = merge_conditions(
+        formulas=[x['formula'] for x in checks],
+        valid=valid,
+        ignore_blanks=[x['ignore_blank'] for x in checks],
+    )
+    return formula.format(col=col, row=row)
 
 
 def readable_join(values: List[str]) -> str:

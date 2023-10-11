@@ -300,10 +300,11 @@ def write_template(
                         foreign_keys=foreign_keys if validate_foreign_keys else None,
                         indirect=True,
                     )
-                    formula = helpers.build_column_condition(checks, valid=False)
-                    if formula:
-                        formula = formula.format(
-                            col=layout.get_column_code(table, column), row=2
+                    if checks:
+                        formula = helpers.build_column_condition(
+                            checks=checks,
+                            valid=False,
+                            col=layout.get_column_code(table, column),
                         )
                         sheet.add_conditional_formatting(
                             # HACK: Force pygsheets to use grange

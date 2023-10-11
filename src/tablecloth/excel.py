@@ -260,14 +260,15 @@ def write_template(
                     constraints=constraints,
                     foreign_keys=foreign_keys if validate_foreign_keys else None,
                 )
-                formula = helpers.build_column_condition(checks, valid=False)
-                if formula:
-                    formula = formula.format(
-                        col=layout.get_column_code(table, column), row=2
+                if checks:
+                    formula = helpers.build_column_condition(
+                        checks=checks,
+                        valid=False,
+                        col=layout.get_column_code(table, column),
                     )
                     sheet.conditional_format(
                         cells,
-                        {
+                        options={
                             'type': 'formula',
                             'criteria': formula,
                             'format': format_invalid,
