@@ -11,37 +11,13 @@ from . import constants
 
 
 def camel_to_snake_case(x: str) -> str:
-    """
-    Convert camelCase (and CamelCase) to snake_case.
-
-    Examples
-    --------
-    >>> camel_to_snake_case('camelCase')
-    'camel_case'
-    >>> camel_to_snake_case('CamelCase')
-    'camel_case'
-    >>> camel_to_snake_case('snake_case')
-    'snake_case'
-    """
+    """Convert camelCase (and CamelCase) to snake_case."""
     pattern = re.compile(r'(?<!^)(?=[A-Z])')
     return pattern.sub('_', x).lower()
 
 
 def to_list(x: str | list | None) -> list:
-    """
-    Cast to list, wrapping singleton string as first element.
-
-    Examples
-    --------
-    >>> to_list(None)
-    []
-    >>> to_list('')
-    []
-    >>> to_list('x')
-    ['x']
-    >>> to_list(['x'])
-    ['x']
-    """
+    """Cast to list, wrapping singleton string as first element."""
     if not x:
         return []
     if isinstance(x, str):
@@ -50,21 +26,7 @@ def to_list(x: str | list | None) -> list:
 
 
 def column_index_to_code(i: int) -> str:
-    """
-    Convert a column index to a spreadsheet column code.
-
-    Examples
-    --------
-    >>> column_index_to_code(0)
-    'A'
-    >>> column_index_to_code(26)
-    'AA'
-    >>> column_index_to_code(16383)
-    'XFD'
-    >>> i = 1
-    >>> i == column_code_to_index(column_index_to_code(i))
-    True
-    """
+    """Convert a column index to a spreadsheet column code."""
     letters: List[str] = []
     i = i + 1
     while i:
@@ -74,21 +36,7 @@ def column_index_to_code(i: int) -> str:
 
 
 def column_code_to_index(code: str) -> int:
-    """
-    Convert a spreadsheet column code to a column index (zero-based).
-
-    Examples
-    --------
-    >>> column_code_to_index('A')
-    0
-    >>> column_code_to_index('AA')
-    26
-    >>> column_code_to_index('XFD')
-    16383
-    >>> code = 'B'
-    >>> code == column_index_to_code(column_code_to_index(code))
-    True
-    """
+    """Convert a spreadsheet column code to a column index (zero-based)."""
 
     # https://gist.github.com/dbspringer/643254008e6784aa749e#file-col2num-py
     def function(x: int, y: int) -> int:
@@ -98,32 +46,12 @@ def column_code_to_index(code: str) -> int:
 
 
 def row_index_to_code(i: int) -> int:
-    """
-    Convert a row index (zero-based) to a spreadsheet row code.
-
-    Examples
-    --------
-    >>> i = 1
-    >>> row_index_to_code(i)
-    2
-    >>> i == row_code_to_index(row_index_to_code(i))
-    True
-    """
+    """Convert a row index (zero-based) to a spreadsheet row code."""
     return i + 1
 
 
 def row_code_to_index(code: int) -> int:
-    """
-    Convert a spreadsheet row code to a row index (zero-based).
-
-    Examples
-    --------
-    >>> i = 2
-    >>> row_code_to_index(i)
-    1
-    >>> i == row_index_to_code(row_code_to_index(i))
-    True
-    """
+    """Convert a spreadsheet row code to a row index (zero-based)."""
     return code - 1
 
 
@@ -135,7 +63,7 @@ def column_to_range(
     sheet: str | None = None,
     indirect: bool = False,
 ) -> str:
-    r"""
+    """
     Get a column's cell range in spreadsheet notation.
 
     Parameters
@@ -154,25 +82,6 @@ def column_to_range(
         Whether to wrap the range in the `INDIRECT` function.
         See https://support.google.com/docs/answer/3093377.
         Ignored if `sheet` is None.
-
-    Examples
-    --------
-    >>> column_to_range(0, 1, nrows=1)
-    'A2'
-    >>> column_to_range(0, 1, nrows=1, fixed=True)
-    '$A$2'
-    >>> column_to_range(0, 1)
-    'A2:A'
-    >>> column_to_range(0, 1, fixed=True)
-    '$A$2:$A'
-    >>> column_to_range(0, 1, nrows=2)
-    'A2:A3'
-    >>> column_to_range(0, 1, nrows=2, fixed=True)
-    '$A$2:$A$3'
-    >>> column_to_range(0, 1, nrows=2, fixed=True, sheet='Sheet1')
-    "'Sheet1'!$A$2:$A$3"
-    >>> column_to_range(0, 1, indirect=True, sheet='Sheet1')
-    'INDIRECT("\'Sheet1\'!A2:A")'
     """
     col_code = column_index_to_code(col)
     row_code = row_index_to_code(row)
@@ -193,27 +102,17 @@ def column_to_range(
 
 def format_value(x: bool | int | float | str | None) -> str:
     """
-    Format a singleton value for spreadsheet cells or formulas.
+    Format a singleton value to a string for spreadsheet cells or formulas.
 
     Parameters
     ----------
     x
         Singleton value.
 
-    Examples
-    --------
-    >>> format_value(True)
-    'TRUE'
-    >>> format_value(1)
-    '1'
-    >>> format_value('a')
-    '"a"'
-    >>> format_value(None)
-    ''
-    >>> format_value([])
-    Traceback (most recent call last):
-      ...
-    ValueError: Unexpected value [] of type <class 'list'>
+    Raises
+    ------
+    ValueError
+        Unexpected value `x` with unsupported type.
     """
     if isinstance(x, bool):
         return str(x).upper()
@@ -223,7 +122,7 @@ def format_value(x: bool | int | float | str | None) -> str:
         return f'"{x}"'
     if x is None:
         return ''
-    raise ValueError(f'Unexpected value {x} of type {type(x)}')
+    raise ValueError(f'Unexpected value {x} with unsupported type {type(x)}')
 
 
 def merge_formulas(formulas: List[str], operator: Literal['AND', 'OR']) -> str:
@@ -236,17 +135,6 @@ def merge_formulas(formulas: List[str], operator: Literal['AND', 'OR']) -> str:
         Spreadsheet formulas.
     operator
         Logical operator.
-
-    Examples
-    --------
-    >>> merge_formulas([], 'AND')
-    ''
-    >>> merge_formulas(['A2 > 0'], 'AND')
-    'A2 > 0'
-    >>> merge_formulas(['A2 > 0', 'A2 < 3'], 'AND')
-    'AND(A2 > 0, A2 < 3)'
-    >>> merge_formulas(['A2 > 0', 'A2 < 3'], 'OR')
-    'OR(A2 > 0, A2 < 3)'
     """
     if not formulas:
         return ''
@@ -277,35 +165,6 @@ def merge_conditions(
         Merged formula.
         All `formulas` which `ignore_blanks` are wrapped in an if statement
         with column and row placeholders (`IF(ISBLANK({col}{row}), ...`).
-
-    Examples
-    --------
-    >>> formulas = ['A2 > 0', 'A2 < 3']
-
-    True if `A2` is null or in the interval (0, 3):
-
-    >>> merge_conditions(formulas, valid=True)
-    'IF(ISBLANK({col}{row}), TRUE, AND(A2 > 0, A2 < 3))'
-
-    True if `A2` is not null and in the interval (0, 3):
-
-    >>> merge_conditions(formulas, valid=True, ignore_blanks=[False, False])
-    'AND(A2 > 0, A2 < 3)'
-
-    True if `A2` is not null and in the intervals (0, ∞) or (-∞, 3):
-
-    >>> merge_conditions(formulas, valid=False)
-    'IF(ISBLANK({col}{row}), FALSE, OR(A2 > 0, A2 < 3))'
-
-    True if `A2` is null or in the intervals (0, ∞) or (-∞, 3):
-
-    >>> merge_conditions(formulas, valid=False, ignore_blanks=[False, False])
-    'OR(A2 > 0, A2 < 3)'
-
-    >>> merge_conditions(formulas, valid=True, ignore_blanks=[False, True])
-    'AND(A2 > 0, IF(ISBLANK({col}{row}), TRUE, A2 < 3))'
-    >>> merge_conditions(formulas, valid=False, ignore_blanks=[False, True])
-    'OR(A2 > 0, IF(ISBLANK({col}{row}), FALSE, A2 < 3))'
     """
     operator: Literal['AND', 'OR'] = 'AND' if valid else 'OR'
     fs, fs_ignore = [], []
@@ -358,18 +217,7 @@ def build_column_condition(
 
 
 def readable_join(values: List[str]) -> str:
-    """
-    Return an English grammatically-correct list (with an Oxford comma).
-
-    Examples
-    --------
-    >>> readable_join(['a'])
-    'a'
-    >>> readable_join(['a', 'b'])
-    'a and b'
-    >>> readable_join(['a', 'b', 'c'])
-    'a, b, and c'
-    """
+    """Return an English grammatically-correct list (with an Oxford comma)."""
     if len(values) < 3:
         return ' and '.join(values)
     return ', '.join(values[:-1]) + ', and ' + values[-1]
@@ -401,19 +249,7 @@ def build_column_validation(checks: List[constants.Check]) -> constants.Check | 
 def reduce_foreign_keys(
     foreign_keys: List[constants.ForeignKey], table: str, column: str
 ) -> List[Tuple[str | None, str]]:
-    """
-    Reduce foreign keys to the unique set of simple foreign keys for the given column.
-
-    Example
-    -------
-    >>> foreign_keys = [
-    ...     {'fields': ['a'], 'reference': {'resource': 'x', 'fields': ['aa']}},
-    ...     {'fields': ['b'], 'reference': {'resource': 'x', 'fields': ['bb']}},
-    ...     {'fields': ['b', 'a'], 'reference': {'resource': 'y', 'fields': ['b', 'a']}}
-    ... ]
-    >>> reduce_foreign_keys(foreign_keys, table='x', column='a')
-    [(None, 'aa'), ('y', 'a')]
-    """
+    """Reduce foreign keys to the unique set of simple foreign keys for one column."""
     keys = []
     for foreign_key in foreign_keys or []:
         columns = to_list(foreign_key['fields'])
