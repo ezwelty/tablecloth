@@ -50,7 +50,9 @@ jobs:
         run: poetry run pytest --doctest-modules src tests
       - name: Run tests - including Google Sheets (with coverage)
         if: env.coverage == 'true'
-        run: GOOGLE_CLOUD_SERVICE_ACCOUNT_KEY=${{ secrets.GOOGLE_CLOUD_SERVICE_ACCOUNT_KEY }} poetry run pytest --doctest-modules src tests --cov=src --cov-report xml --gsheets -rs
+        env:
+          GOOGLE_CLOUD_SERVICE_ACCOUNT_KEY: ${{ secrets.GOOGLE_CLOUD_SERVICE_ACCOUNT_KEY }}
+        run: poetry run pytest --doctest-modules src tests --cov=src --cov-report xml --gsheets -rs
       - name: Upload coverage to Codecov
         if: env.coverage == 'true'
         uses: codecov/codecov-action@v3
