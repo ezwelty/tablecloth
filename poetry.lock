@@ -410,7 +410,7 @@ python-versions = ">=3.6"
 
 [[package]]
 name = "pydoclint"
-version = "0.3.3"
+version = "0.3.4"
 description = "A Python docstring linter that checks arguments, returns, yields, and raises sections"
 category = "dev"
 optional = false
@@ -980,8 +980,8 @@ pycodestyle = [
     {file = "pycodestyle-2.10.0.tar.gz", hash = "sha256:347187bdb476329d98f695c213d7295a846d1152ff4fe9bacb8a9590b8ee7053"},
 ]
 pydoclint = [
-    {file = "pydoclint-0.3.3-py2.py3-none-any.whl", hash = "sha256:0b2039364c9a08e13e00597875e42fe9609e4fc7c6e0b114830f564281717877"},
-    {file = "pydoclint-0.3.3.tar.gz", hash = "sha256:478c6cfe9507631382ab9a866da80fe7df96d39e53938f67ef5110bdca688af5"},
+    {file = "pydoclint-0.3.4-py2.py3-none-any.whl", hash = "sha256:2af933b5ce4a11c63da00bc541a1c35b9a705ae4362e4307c0e99f724d5f7873"},
+    {file = "pydoclint-0.3.4.tar.gz", hash = "sha256:3523507ca8092714951da399396ef11c5f6dec5275403040e8ec799c83de608b"},
 ]
 pydocstyle = [
     {file = "pydocstyle-6.3.0-py3-none-any.whl", hash = "sha256:118762d452a49d6b05e194ef344a55822987a462831ade91ec5c06fd2169d019"},
