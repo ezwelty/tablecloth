@@ -29,6 +29,61 @@ class Layout:
         Tables added by :meth:`set_table`.
     enums
         Enums added by :meth:`set_enum`.
+
+    Examples
+    --------
+    Add tables and enums to the layout.
+
+    >>> layout = Layout()
+    >>> layout.set_table('tree', ['id', 'name', 'type'])
+    >>> layout.set_table('branch', ['tree_id', 'attached'])
+    >>> tree_types = ['deciduous', 'evergreen']
+    >>> layout.set_enum(tree_types)
+
+    Get table and enum properties.
+
+    >>> layout.get_table('tree')
+    {'sheet': 'tree', 'table': 'tree', 'columns': ['id', 'name', 'type']}
+    >>> layout.get_enum(tree_types)
+    {'values': ['deciduous', 'evergreen'], 'col': 0}
+
+    Get column and enum cell ranges.
+
+    >>> layout.get_column_range('tree', 'id', absolute=True, fixed=True)
+    "'tree'!$A$2:$A"
+    >>> layout.get_column_range('branch', 'tree_id')
+    'A2:A'
+    >>> layout.get_enum_range(tree_types)
+    "'lists'!$A$1:$A$2"
+
+    Determine which dropdown (if any) to use for a column.
+
+    >>> layout.select_column_dropdown('tree', 'type', constraints={'enum': tree_types})
+    {'source': 'enum', 'values': "'lists'!$A$1:$A$2"}
+    >>> layout.select_column_dropdown('branch', 'attached', dtype='boolean')
+    {'source': 'boolean', 'values': ['TRUE', 'FALSE']}
+    >>> foreign_keys = [{
+    ...    'fields': ['tree_id'],
+    ...     'reference': {'resource': 'tree', 'fields': ['id']},
+    ... }]
+    >>> layout.select_column_dropdown('branch', 'tree_id', foreign_keys=foreign_keys)
+    {'source': 'foreign_key', 'values': "'tree'!$A$2:$A"}
+    >>> layout.select_column_dropdown('tree', 'id') is None
+    True
+
+    Gather all checks for a column.
+
+    >>> checks = layout.gather_column_checks(
+    ...     'branch', 'tree_id', valid=True, dtype='integer', foreign_keys=foreign_keys
+    ... )
+    >>> import pprint
+    >>> pprint.pprint(checks)
+    [{'formula': 'IF(ISNUMBER(A2), INT(A2) = A2, FALSE)',
+      'ignore_blank': True,
+      'message': 'integer'},
+     {'formula': "ISNUMBER(MATCH(A2, 'tree'!$A$2:$A, 0))",
+      'ignore_blank': True,
+      'message': "in the range 'tree'!$A$2:$A"}]
     """
 
     def __init__(
@@ -116,7 +171,22 @@ class Layout:
         raise KeyError(f"Table '{table}' not found")
 
     def set_enum(self, values: list) -> None:
-        """Add an enum (if new) to the enum sheet."""
+        """
+        Add an enum (if new) to the enum sheet.
+
+        Parameters
+        ----------
+        values
+            Enum values. Should be unique (since used in dropdown) and not start with
+            special spreadsheet characters (+, =, '), but this is not required.
+
+        Raises
+        ------
+        ValueError
+            Enum values (`values`) has zero length.
+        """
+        if not len(values):
+            raise ValueError('Enum values (`values`) have zero length')
         formulas = [x for x in values if isinstance(x, str) and re.match(r"^[+=']", x)]
         if formulas:
             warnings.warn(
@@ -161,25 +231,7 @@ class Layout:
         )
 
     def get_column_code(self, table: str, column: str) -> str:
-        """
-        Get a column's code.
-
-        Parameters
-        ----------
-        table
-            Table name.
-        column
-            Column name.
-
-        Examples
-        --------
-        >>> layout = Layout()
-        >>> layout.set_table('table', ['id', 'x'])
-        >>> layout.get_column_code('table', 'id')
-        'A'
-        >>> layout.get_column_code('table', 'x')
-        'B'
-        """
+        """Get a column's code."""
         x = self.get_table(table)
         index = x['columns'].index(column)
         return helpers.column_index_to_code(index)
@@ -397,19 +449,14 @@ class Layout:
             }
             checks.append(check)
         # foreign keys
-        for foreign_key in foreign_keys or []:
-            local_columns = helpers.to_list(foreign_key['fields'])
-            foreign_columns = helpers.to_list(foreign_key['reference']['fields'])
-            try:
-                i = local_columns.index(column)
-            except ValueError:
-                continue
-            foreign_column = foreign_columns[i]
-            foreign_table = foreign_key['reference'].get('resource') or table
+        simple_foreign_keys = helpers.reduce_foreign_keys(
+            foreign_keys or [], table=table, column=column
+        )
+        for foreign_table, foreign_column in simple_foreign_keys:
             column_range = self.get_column_range(
-                foreign_table,
-                foreign_column,
-                absolute=foreign_table != table,
+                table=foreign_table or table,
+                column=foreign_column,
+                absolute=foreign_table is not None,
                 fixed=True,
                 indirect=indirect,
             )

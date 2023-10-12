@@ -27,6 +27,8 @@ def to_list(x: str | list | None) -> list:
 
 def column_index_to_code(i: int) -> str:
     """Convert a column index to a spreadsheet column code."""
+    if i < 0:
+        raise ValueError('Column index `i` is less than zero')
     letters: List[str] = []
     i = i + 1
     while i:
@@ -47,6 +49,8 @@ def column_code_to_index(code: str) -> int:
 
 def row_index_to_code(i: int) -> int:
     """Convert a row index (zero-based) to a spreadsheet row code."""
+    if i < 0:
+        raise ValueError('Row index `i` is less than zero')
     return i + 1
 
 
@@ -82,7 +86,14 @@ def column_to_range(
         Whether to wrap the range in the `INDIRECT` function.
         See https://support.google.com/docs/answer/3093377.
         Ignored if `sheet` is None.
+
+    Raises
+    ------
+    ValueError
+        Number of rows (`nrows`) is less than one.
     """
+    if nrows is not None and nrows < 1:
+        raise ValueError('Number of rows (`nrows`) is less than one')
     col_code = column_index_to_code(col)
     row_code = row_index_to_code(row)
     prefix = '$' if fixed else ''

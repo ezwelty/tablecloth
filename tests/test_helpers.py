@@ -53,6 +53,12 @@ def test_converts_column_index_to_code_and_back(input: int, expected: str) -> No
     assert tablecloth.helpers.column_code_to_index(code) == input
 
 
+def test_fails_to_convert_negative_column_index() -> None:
+    """It refuses to convert a negative column index."""
+    with pytest.raises(ValueError):
+        tablecloth.helpers.column_index_to_code(-1)
+
+
 @pytest.mark.parametrize(
     'input, expected',
     [
@@ -66,6 +72,12 @@ def test_converts_row_index_to_code_and_back(input: int, expected: int) -> None:
     code = tablecloth.helpers.row_index_to_code(input)
     assert code == expected
     assert tablecloth.helpers.row_code_to_index(code) == input
+
+
+def test_fails_to_convert_negative_row_index() -> None:
+    """It refuses to convert a negative row index."""
+    with pytest.raises(ValueError):
+        tablecloth.helpers.row_index_to_code(-1)
 
 
 @pytest.mark.parametrize(
@@ -99,6 +111,12 @@ def test_builds_spreadsheet_cell_range_for_column_selection(
 ) -> None:
     """It builds a spreadsheet cell range for a column given the selected options."""
     assert tablecloth.helpers.column_to_range(**input) == expected
+
+
+def test_fails_to_build_cell_range_of_zero_length() -> None:
+    """It refuses to build a cell range of zero length."""
+    with pytest.raises(ValueError):
+        tablecloth.helpers.column_to_range(col=0, row=1, nrows=0)
 
 
 @pytest.mark.parametrize(
