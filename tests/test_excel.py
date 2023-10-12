@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import datetime
+import tempfile
 import zipfile
 from pathlib import Path
 from typing import Any, List
@@ -37,7 +38,9 @@ def write_indempotent_template(path: str | Path, **kwargs: Any) -> None:
         for resource in package['resources']
     }
     kwargs = {'header_comments': comments, **kwargs}
-    book: xlsxwriter.Workbook = tablecloth.excel.write_template(package, **kwargs)
+    book: xlsxwriter.Workbook = tablecloth.excel.write_template(
+        package, path=None, **kwargs
+    )
     book.set_properties({'created': datetime.datetime(2000, 1, 1)})
     book.filename = path
     book.close()
@@ -81,3 +84,12 @@ def test_writes_template(name: str, arguments: dict) -> None:
     actual = Path(__file__).parent / 'xlsx' / f'{name}-test.xlsx'
     write_indempotent_template(path=actual, **arguments)
     assert read_xlsx_as_string(actual) == read_xlsx_as_string(expected)
+
+
+def test_writes_template_to_file() -> None:
+    """It writes an Excel file to the given path."""
+    package = {'resources': [{'name': 'table', 'schema': {'fields': [{'name': 'x'}]}}]}
+    with tempfile.TemporaryDirectory() as directory:
+        path = Path(directory) / 'test.xlsx'
+        tablecloth.excel.write_template(package, path=path)
+        assert path.exists()
