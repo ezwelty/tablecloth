@@ -36,9 +36,8 @@ def write_indempotent_template(path: str | Path, **kwargs: Any) -> None:
         ]
         for resource in package['resources']
     }
-    book: xlsxwriter.Workbook = tablecloth.excel.write_template(
-        package, header_comments=comments, **kwargs
-    )
+    kwargs = {'header_comments': comments, **kwargs}
+    book: xlsxwriter.Workbook = tablecloth.excel.write_template(package, **kwargs)
     book.set_properties({'created': datetime.datetime(2000, 1, 1)})
     book.filename = path
     book.close()
@@ -73,6 +72,7 @@ def read_xlsx_as_string(path: str | Path) -> str:
             'errors-except-fkeys',
             {'error_type': 'information', 'validate_foreign_keys': False},
         ),
+        ('hide-columns', {'hide_columns': True, 'header_comments': None}),
     ],
 )
 def test_writes_template(name: str, arguments: dict) -> None:
