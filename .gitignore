@@ -9,3 +9,4 @@ __pycache__
 tests/xlsx/*-test.xlsx
 .coverage
 coverage.xml
+htmlcov
