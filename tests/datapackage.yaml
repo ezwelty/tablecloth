@@ -41,6 +41,16 @@ resources:
           type: string
           constraints:
             pattern: '[a-c]'
+        - name: integer_enum
+          description: One of the first three positive integers
+          type: integer
+          constraints:
+            enum: [1, 2, 3]
+        - name: number_enum
+          description: One of the first three quarters after 1
+          type: number
+          constraints:
+            enum: [1.25, 1.50, 1.75]
   - name: fkey-simple
     schema:
       foreignKeys:
