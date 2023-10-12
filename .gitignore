@@ -10,3 +10,5 @@ tests/xlsx/*-test.xlsx
 .coverage
 coverage.xml
 htmlcov
+.env
+*.json
