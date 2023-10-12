@@ -83,3 +83,49 @@ tablecloth.excel.write_template(
   package, path='template.xlsx', header_comments=comments
 )
 ```
+
+## Development
+
+Clone the repository and use `poetry` to install `tablecloth` into a virtual environment
+linked to your current Python version:
+
+```bash
+git clone https://github.com/ezwelty/tablecloth
+cd tablecloth
+poetry install
+```
+
+To avoid committing code that breaks tests or violates the style guide,
+consider installing [`pre-commit`](https://pre-commit.com) (if needed)
+and installing the hooks:
+
+```bash
+pre-commit install
+```
+
+Useful commands are listed in [`.pre-commit-config.yaml`](pre-commit-config.yaml).
+For example, to run most tests:
+
+```bash
+poetry run pytest --doctest-modules src tests
+```
+
+### Google Sheets
+
+To run tests for Google Sheets, you will need to create a Google Cloud project,
+add a service account, and create and download a JSON key
+(see https://pygsheets.readthedocs.io/en/stable/authorization.html#service-account).
+Then, copy the example environment file:
+
+```bash
+cp .env.example .env
+```
+
+and fill in the content of the JSON key.
+Optionally, add your personal Google account email so that Google Sheets created by your
+service account are shared with you.
+Once configured, use the `--gsheets` flag include Google Sheets tests:
+
+```bash
+poetry run pytest --doctest-modules src tests --gsheets
+```
