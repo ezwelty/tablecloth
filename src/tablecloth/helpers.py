@@ -83,7 +83,7 @@ def column_to_range(
     sheet
         Whether to refer to the range by sheet name (e.g. 'Sheet1'!A2:A).
     indirect
-        Whether to wrap the range in the `INDIRECT` function.
+        Whether to wrap the range in the INDIRECT function.
         See https://support.google.com/docs/answer/3093377.
         Ignored if `sheet` is None.
 

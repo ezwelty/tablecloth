@@ -12,3 +12,6 @@ coverage.xml
 htmlcov
 .env
 *.json
+
+# sphinx
+docs/_build

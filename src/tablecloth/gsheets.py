@@ -171,7 +171,7 @@ def write_template(
         (one value per cell, None to skip).
     dropdowns
         Whether to display a dropdown if a column meets certain conditions.
-        See :meth:`Layout.select_column_dropdown`.
+        See :meth:`.Layout.select_column_dropdown`.
         If selected, additional column constraints will not be enforced by `error_type`,
         but will be by `format_invalid`.
     error_type

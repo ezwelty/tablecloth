@@ -217,7 +217,7 @@ class Layout:
         values
             Enum values.
         indirect
-            Whether to wrap range in `INDIRECT` function.
+            Whether to wrap range in INDIRECT function.
             See https://support.google.com/docs/answer/3093377.
         """
         x = self.get_enum(values)
@@ -262,7 +262,7 @@ class Layout:
         fixed
             Whether to use a fixed range (e.g. $A$2:$A).
         indirect
-            Whether to wrap range in `INDIRECT` function.
+            Whether to wrap range in INDIRECT function.
             See https://support.google.com/docs/answer/3093377.
         """
         x = self.get_table(table)
@@ -316,7 +316,7 @@ class Layout:
             :meth:`set_table`.
         indirect
             Whether to wrap cell ranges (for enum constraints and foreign keys)
-            in the `INDIRECT` function.
+            in the INDIRECT function.
             See https://support.google.com/docs/answer/3093377.
 
         Returns
@@ -380,7 +380,7 @@ class Layout:
             Column constraints. See
             https://specs.frictionlessdata.io/table-schema/#constraints.
             Both snake_case and camelCase are supported.
-            An `enum` constraint must first be registered with `self.set_enum`.
+            An `enum` constraint must already be registered with :meth:`set_enum`.
         foreign_keys
             Foreign key constraints. See
             https://specs.frictionlessdata.io/table-schema/#foreign-keys.
@@ -388,7 +388,7 @@ class Layout:
             in a spreadsheet, so they are treated as multiple simple foreign keys.
         indirect
             Whether to wrap cell ranges (for enum constraints and foreign keys)
-            in the `INDIRECT` function.
+            in the INDIRECT function.
             See https://support.google.com/docs/answer/3093377.
         """
         columns = self.get_table(table)['columns']
