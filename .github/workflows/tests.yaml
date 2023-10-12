@@ -2,11 +2,12 @@ name: tests
 on:
   push:
     paths-ignore:
-      - README.md
+      - .env.example
       - .flake8
       - .gitignore
       - .pre-commit-config.yaml
       - LICENSE.md
+      - README.md
 jobs:
   tests:
     strategy:
@@ -47,9 +48,9 @@ jobs:
       - name: Run tests
         if: env.coverage != 'true'
         run: poetry run pytest --doctest-modules src tests
-      - name: Run tests (with coverage)
+      - name: Run tests - including Google Sheets (with coverage)
         if: env.coverage == 'true'
-        run: poetry run pytest --doctest-modules src tests --cov --cov-report xml
+        run: GOOGLE_CLOUD_SERVICE_ACCOUNT_KEY=${{ secrets.GOOGLE_CLOUD_SERVICE_ACCOUNT_KEY }} poetry run pytest --doctest-modules src tests --cov=src --cov-report xml --gsheets -rs
       - name: Upload coverage to Codecov
         if: env.coverage == 'true'
         uses: codecov/codecov-action@v3
