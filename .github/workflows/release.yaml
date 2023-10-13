@@ -1,0 +1,31 @@
+# .github/workflows/release.yml
+name: Release
+on:
+  release:
+    types: [published]
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Check out repository
+      uses: actions/checkout@v3
+    - name: Install Python
+      uses: actions/setup-python@v4
+      id: setup-python
+      with:
+        python-version: '3.9'
+    - name: Install poetry
+      uses: snok/install-poetry@v1
+      with:
+        virtualenvs-create: true
+        virtualenvs-in-project: true
+    - name: Install library and dependencies
+      run: poetry install --all-extras --no-interaction
+    - name: Run tests - including Google Sheets
+      env:
+        GOOGLE_CLOUD_SERVICE_ACCOUNT_KEY: '${{ secrets.GOOGLE_CLOUD_SERVICE_ACCOUNT_KEY }}'
+      run: poetry run pytest --doctest-modules src tests --gsheets -rs
+    - name: Build package
+      run: poetry build
+    - name: Publish package
+      run: poetry publish --username=__token__ --password=${{ secrets.PYPI_TOKEN }}
