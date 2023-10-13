@@ -2,7 +2,10 @@
 ============
 
 [![codecov](https://codecov.io/gh/ezwelty/tablecloth/branch/main/graph/badge.svg?token=RP9E7WLFCI)](https://codecov.io/gh/ezwelty/tablecloth)
-![tests](https://github.com/ezwelty/tablecloth/actions/workflows/tests.yaml/badge.svg)
+[![tests](https://github.com/ezwelty/tablecloth/actions/workflows/tests.yaml/badge.svg)](https://github.com/ezwelty/tablecloth/actions/workflows/tests.yaml)
+
+![A Google Sheets template in action](docs/_static/example.png?raw=true)
+_Google Sheets template generated for [tests/datapackage.yaml](tests/datapackage.yaml) with invalid values highlighted in red._
 
 ## Installation
 

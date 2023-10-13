@@ -16,6 +16,19 @@ tablecloth: Spreadsheet templates for tabular data entry
    license
    genindex
 
+|codecov| |tests|
+
+.. |codecov| image:: https://codecov.io/gh/ezwelty/tablecloth/branch/main/graph/badge.svg?token=RP9E7WLFCI
+   :target: https://codecov.io/gh/ezwelty/tablecloth
+
+.. |tests| image:: https://github.com/ezwelty/tablecloth/actions/workflows/tests.yaml/badge.svg
+   :target: https://github.com/ezwelty/tablecloth/actions/workflows/tests.yaml
+
+.. image:: _static/example.png
+   :alt: A Google Sheets template in action
+   :align: center
+
+*Example Google Sheets template with invalid values highlighted in red.*
 
 Installation
 ------------
