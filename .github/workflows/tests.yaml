@@ -8,6 +8,8 @@ on:
       - .pre-commit-config.yaml
       - LICENSE.md
       - README.md
+    tags-ignore:
+      - '**'
 jobs:
   tests:
     strategy:
