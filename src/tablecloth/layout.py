@@ -1,4 +1,10 @@
-"""Lay tables out onto a spreadsheet."""
+"""
+Build custom tabular spreadsheet layouts.
+
+Lay tables and enumerated values onto a spreadsheet, retrieve their positions in
+spreadsheet notation, and generate dropdowns, data validation, and conditional
+formatting from column constraints.
+"""
 from __future__ import annotations
 
 import re

@@ -1,4 +1,4 @@
-"""Support for Microsoft Excel."""
+"""Write Microsoft Excel templates."""
 from __future__ import annotations
 
 from pathlib import Path
