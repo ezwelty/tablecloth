@@ -23,3 +23,4 @@ napoleon_google_docstring = False
 napoleon_numpy_docstring = True
 html_static_path = ['_static']
 html_css_files = ['custom.css']
+copybutton_exclude = '.linenos, .gp, .go'
