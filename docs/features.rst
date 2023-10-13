@@ -37,9 +37,13 @@ defined in the Frictionless Data
      - ✅
      - ✅
 
-Support for date/time types may follow, at least in Google Sheets.
-Micosoft Excel represents dates as numbers internally, making validation difficult.
+.. note::
 
+   **Date/time types** may be supported in the future.
+   In Google Sheets, they can be simulated using a ``string`` with a
+   ``pattern`` constraint (see `Column constraints`_ below).
+   Micosoft Excel represents dates as numbers and does not support ``pattern``
+   constraints, making implementation difficult.
 
 Column constraints
 ------------------
@@ -78,8 +82,10 @@ but not for all column types or all spreadsheet platforms.
      - ❌
      - ``string``
    * - ``enum``
-     - ``integer``, ``number``, ``string``
-     - ``integer``, ``number``, ``string``
+     - ``integer``, ``number``, ``string``.
+       Unreliable behavior for strings starting with =, +, or '.
+     - ``integer``, ``number``, ``string``.
+       Strings starting with =, +, or ' should be prefixed with '.
 
 Microsoft Excel does not have built-in regular expression support,
 so there is no reliable way of implementing a ``pattern`` constraint.
