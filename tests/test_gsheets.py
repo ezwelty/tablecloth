@@ -30,6 +30,24 @@ else:
     )
 
 
+def get_book(name: str) -> pygsheets.Spreadsheet:
+    """Open or create a Google Sheets workbook by name."""
+    try:
+        # Open and reset if already exists
+        book = client.open(name)
+        tablecloth.gsheets.reset_sheets(book)
+    except pygsheets.exceptions.SpreadsheetNotFound:
+        # Create and share if not
+        book = client.create(name)
+    # Share with user's Google Account
+    share_with = os.getenv('GOOGLE_ACCOUNT')
+    if share_with:
+        book.share(share_with, role='writer', type='user')
+    # Print full URL to spreadsheet
+    print(f'https://docs.google.com/spreadsheets/d/{book.id}')
+    return book
+
+
 @pytest.mark.gsheets
 @pytest.mark.parametrize(
     'name, arguments',
@@ -47,19 +65,7 @@ def test_writes_template(name: str, arguments: dict) -> None:
         ]
         for resource in package['resources']
     }
-    try:
-        # Open and reset if already exists
-        book = client.open(f'tablecloth-test-{name}')
-        tablecloth.gsheets.reset_sheets(book)
-    except pygsheets.exceptions.SpreadsheetNotFound:
-        # Create and share if not
-        book = client.create(f'tablecloth-test-{name}')
-    # Share with user's Google Account
-    share_with = os.getenv('GOOGLE_ACCOUNT')
-    if share_with:
-        book.share(share_with, role='writer', type='user')
-    # Print full URL to spreadsheet
-    print(f'https://docs.google.com/spreadsheets/d/{book.id}')
     # Write template
+    book = get_book(f'tablecloth-test-{name}')
     kwargs = {'header_comments': comments, **arguments}
     tablecloth.gsheets.write_template(package, book=book, **kwargs)

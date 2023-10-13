@@ -14,30 +14,21 @@ import yaml
 import tablecloth.excel
 
 
-def write_indempotent_template(path: str | Path, **kwargs: Any) -> None:
+def write_indempotent_template(package: dict, path: str | Path, **kwargs: Any) -> None:
     """
-    Write an indempotent Excel template for the test Tabular Data Package.
+    Write an indempotent Excel template.
 
     Sets the internal creation date of the file to 2000-01-01 so that it never changes.
 
     Parameters
     ----------
+    package
+        Package descriptor.
     path
         Path of Microsoft Excel file.
     **kwargs
         Arguments to :func:`tablecloth.excel.write_template`.
     """
-    # Load package descriptor
-    package_path = Path(__file__).parent / 'datapackage.yaml'
-    package = yaml.safe_load(package_path.read_text(encoding='utf-8'))
-    # Build header comments
-    comments = {
-        resource['name']: [
-            field['description'] for field in resource['schema']['fields']
-        ]
-        for resource in package['resources']
-    }
-    kwargs = {'header_comments': comments, **kwargs}
     book: xlsxwriter.Workbook = tablecloth.excel.write_template(
         package, path=None, **kwargs
     )
@@ -80,9 +71,20 @@ def read_xlsx_as_string(path: str | Path) -> str:
 )
 def test_writes_template(name: str, arguments: dict) -> None:
     """It writes an Excel file that is identical to the expected on."""
+    # Load package descriptor
+    package_path = Path(__file__).parent / 'datapackage.yaml'
+    package = yaml.safe_load(package_path.read_text(encoding='utf-8'))
+    # Build header comments
+    comments = {
+        resource['name']: [
+            field['description'] for field in resource['schema']['fields']
+        ]
+        for resource in package['resources']
+    }
     expected = Path(__file__).parent / 'xlsx' / f'{name}.xlsx'
     actual = Path(__file__).parent / 'xlsx' / f'{name}-test.xlsx'
-    write_indempotent_template(path=actual, **arguments)
+    kwargs = {'header_comments': comments, **arguments}
+    write_indempotent_template(package=package, path=actual, **kwargs)
     assert read_xlsx_as_string(actual) == read_xlsx_as_string(expected)
 
 
