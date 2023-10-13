@@ -36,15 +36,18 @@ def get_book(name: str) -> pygsheets.Spreadsheet:
         # Open and reset if already exists
         book = client.open(name)
         tablecloth.gsheets.reset_sheets(book)
+        print(f'Opened existing Google Sheets {name}')
     except pygsheets.exceptions.SpreadsheetNotFound:
         # Create and share if not
         book = client.create(name)
+        print(f'Created new Google Sheets {name}')
     # Share with user's Google Account
     share_with = os.getenv('GOOGLE_ACCOUNT')
     if share_with:
         book.share(share_with, role='writer', type='user')
+        print(f'Shared Google Sheets {name}')
     # Print full URL to spreadsheet
-    print(f'https://docs.google.com/spreadsheets/d/{book.id}')
+    print(f'{name}: https://docs.google.com/spreadsheets/d/{book.id}')
     return book
 
 
