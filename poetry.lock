@@ -712,6 +712,21 @@ numpy = ["nptyping (>=2.5)"]
 testing = ["covdefaults (>=2.3)", "coverage (>=7.2.7)", "diff-cover (>=7.5)", "pytest (>=7.3.1)", "pytest-cov (>=4.1)", "sphobjinv (>=2.3.1)", "typing-extensions (>=4.6.3)"]
 
 [[package]]
+name = "sphinx-copybutton"
+version = "0.5.2"
+description = "Add a copy button to each of your code cells."
+category = "dev"
+optional = false
+python-versions = ">=3.7"
+
+[package.dependencies]
+sphinx = ">=1.8"
+
+[package.extras]
+code_style = ["pre-commit (==2.12.1)"]
+rtd = ["ipython", "myst-nb", "sphinx", "sphinx-book-theme", "sphinx-examples"]
+
+[[package]]
 name = "sphinx-rtd-theme"
 version = "1.3.0"
 description = "Read the Docs theme for Sphinx"
@@ -897,7 +912,7 @@ gsheets = ["pygsheets"]
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.9"
-content-hash = "be1221f0d3a223c31072e33a9a48bfed427cc307f67c33678f82682c67e9957d"
+content-hash = "df88c3c969c5abfba5c68f2c1ee554bdba0c887bff8081016042bb45594ebd62"
 
 [metadata.files]
 alabaster = [
@@ -1423,6 +1438,10 @@ Sphinx = [
 sphinx-autodoc-typehints = [
     {file = "sphinx_autodoc_typehints-1.24.0-py3-none-any.whl", hash = "sha256:6a73c0c61a9144ce2ed5ef2bed99d615254e5005c1cc32002017d72d69fb70e6"},
     {file = "sphinx_autodoc_typehints-1.24.0.tar.gz", hash = "sha256:94e440066941bb237704bb880785e2d05e8ae5406c88674feefbb938ad0dc6af"},
+]
+sphinx-copybutton = [
+    {file = "sphinx-copybutton-0.5.2.tar.gz", hash = "sha256:4cf17c82fb9646d1bc9ca92ac280813a3b605d8c421225fd9913154103ee1fbd"},
+    {file = "sphinx_copybutton-0.5.2-py3-none-any.whl", hash = "sha256:fb543fd386d917746c9a2c50360c7905b605726b9355cd26e9974857afeae06e"},
 ]
 sphinx-rtd-theme = [
     {file = "sphinx_rtd_theme-1.3.0-py2.py3-none-any.whl", hash = "sha256:46ddef89cc2416a81ecfbeaceab1881948c014b1b6e4450b815311a89fb977b0"},

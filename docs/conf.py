@@ -10,6 +10,7 @@ extensions = [
     'sphinx.ext.napoleon',
     'sphinx_autodoc_typehints',
     'sphinx.ext.viewcode',
+    'sphinx_copybutton',
 ]
 html_theme = 'sphinx_rtd_theme'
 autodoc_member_order = 'bysource'
