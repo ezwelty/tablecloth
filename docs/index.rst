@@ -1,40 +1,42 @@
-tablecloth
-==========
+tablecloth: Spreadsheet templates for tabular data entry
+========================================================
 
 .. toctree::
    :hidden:
    :maxdepth: 1
 
-   self
+   Introduction <self>
+   features
    reference
-   license
 
-Generate spreadsheet templates for data entry based on a data schema!
+.. toctree::
+   :hidden:
+   :caption: Appendix
+
+   license
+   genindex
 
 
 Installation
 ------------
 
-To install the Hypermodern Python project,
-run this command in your terminal:
-
 .. code-block:: console
 
    $ pip install tablecloth[excel,gsheets]
 
-where ``excel`` adds optional support for Microsoft Excel,
-and ``gsheets`` adds optional support for Google Sheets.
+* ``[excel]``: Adds optional support for Microsoft Excel.
+* ``[gsheets]``: Adds optional support for Google Sheets.
 
 Usage
 -----
 
-For example, to create a Microsoft Excel template, ...
+First, describe your tabular data using
+`Frictionless Data <https://frictionlessdata.io>`_'s
+`Tabular Data Package <https://specs.frictionlessdata.io/tabular-data-package>`_ format.
+In this format, tables are *resources* and columns are *fields*.
 
 .. code-block:: python
 
-   import tablecloth.excel
-
-   # Describe the data following the Frictionless Tabular Data Package
    package = {
       'resources': [{
          'name': 'tree',
@@ -68,5 +70,23 @@ For example, to create a Microsoft Excel template, ...
       }]
    }
 
-   # Build the template
+Then use :func:`tablecloth.excel.write_template` to build a Microsoft Excel template.
+
+.. code-block:: python
+
+   import tablecloth.excel
+
    tablecloth.excel.write_template(package, path='template.xlsx')
+
+Or use :func:`tablecloth.gsheets.write_template` to build a Google Sheets
+template. To do so, first authorize access with :func:`pygsheets.authorize` and
+create (or open) a Google Sheets.
+
+.. code-block:: python
+
+   import pygsheets
+   import tablecloth.gsheets
+
+   client = pygsheets.authorize(...)
+   book = client.create('template')
+   tablecloth.gsheets.write_template(package, book=book)

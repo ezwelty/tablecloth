@@ -1,0 +1,17 @@
+.wy-nav-content-wrap {
+  margin-left: 250px;
+}
+.wy-nav-content {
+  max-width: 900px;
+}
+.wy-nav-side {
+  width: 250px;
+}
+.rst-content code.literal {
+  color: inherit;
+  background-color: rgba(27,31,35,.05);
+  border: none;
+  padding: 0.2rem 0.3rem;
+  font-size: 0.75rem;
+  border-radius: 3px;
+}

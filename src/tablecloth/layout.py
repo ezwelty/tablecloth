@@ -21,7 +21,7 @@ class Layout:
         If `None`, column ranges are unbounded (e.g. `A2:A`).
         Otherwise, they are bounded (e.g. `A2:A1000`).
     max_name_length
-        Maximum length of sheet names (in characters).
+        Maximum length of sheet names.
 
     Attributes
     ----------
@@ -29,6 +29,12 @@ class Layout:
         Tables added by :meth:`set_table`.
     enums
         Enums added by :meth:`set_enum`.
+    enum_sheet
+        Name of the sheet used to store enums.
+    max_rows
+        Maximum number of rows allowed per sheet.
+    max_name_length
+        Maximum length of sheet names.
 
     Examples
     --------
@@ -59,15 +65,15 @@ class Layout:
     Determine which dropdown (if any) to use for a column.
 
     >>> layout.select_column_dropdown('tree', 'type', constraints={'enum': tree_types})
-    {'source': 'enum', 'values': "'lists'!$A$1:$A$2"}
+    {'source': 'enum', 'options': "'lists'!$A$1:$A$2"}
     >>> layout.select_column_dropdown('branch', 'attached', dtype='boolean')
-    {'source': 'boolean', 'values': ['TRUE', 'FALSE']}
+    {'source': 'boolean', 'options': ['TRUE', 'FALSE']}
     >>> foreign_keys = [{
     ...    'fields': ['tree_id'],
     ...     'reference': {'resource': 'tree', 'fields': ['id']},
     ... }]
     >>> layout.select_column_dropdown('branch', 'tree_id', foreign_keys=foreign_keys)
-    {'source': 'foreign_key', 'values': "'tree'!$A$2:$A"}
+    {'source': 'foreign_key', 'options': "'tree'!$A$2:$A"}
     >>> layout.select_column_dropdown('tree', 'id') is None
     True
 
@@ -318,36 +324,28 @@ class Layout:
             Whether to wrap cell ranges (for enum constraints and foreign keys)
             in the INDIRECT function.
             See https://support.google.com/docs/answer/3093377.
-
-        Returns
-        -------
-        dropdown :
-            Either None or a dictionary with the following keys:
-
-            * source: Either 'boolean', 'foreign_key', or 'enum'.
-            * values: Either a list (for boolean) or a cell range.
         """
         # Boolean
         if dtype == 'boolean':
-            return {'source': 'boolean', 'values': ['TRUE', 'FALSE']}
+            return {'source': 'boolean', 'options': ['TRUE', 'FALSE']}
         # Foreign key
         keys = helpers.reduce_foreign_keys(
             foreign_keys or [], table=table, column=column
         )
         if keys:
-            values = self.get_column_range(
+            options = self.get_column_range(
                 table=keys[0][0] or table,
                 column=keys[0][1],
                 fixed=True,
                 absolute=keys[0][0] is not None,
                 indirect=indirect,
             )
-            return {'source': 'foreign_key', 'values': values}
+            return {'source': 'foreign_key', 'options': options}
         # Enum
         enum = (constraints or {}).get('enum')
         if enum:
-            values = self.get_enum_range(enum, indirect=indirect)
-            return {'source': 'enum', 'values': values}
+            options = self.get_enum_range(enum, indirect=indirect)
+            return {'source': 'enum', 'options': options}
         return None
 
     def gather_column_checks(

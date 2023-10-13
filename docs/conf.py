@@ -17,3 +17,7 @@ intersphinx_mapping = {
     'xlsxwriter': ('https://xlsxwriter.readthedocs.io', None),
     'pygsheets': ('https://pygsheets.readthedocs.io/en/stable', None),
 }
+napoleon_google_docstring = False
+napoleon_numpy_docstring = True
+html_static_path = ['_static']
+html_css_files = ['custom.css']

@@ -161,6 +161,8 @@ def write_template(
     package
         Frictionless Data Tabular Data Package specification.
         See https://specs.frictionlessdata.io/tabular-data-package.
+        Table names (``resource.name``) are used as sheet names and can be any string up
+        to 100 characters long.
     book
         Workbook.
     enum_sheet
@@ -261,9 +263,9 @@ def write_template(
                                 'ONE_OF_RANGE' if range_validation else 'ONE_OF_LIST'
                             ),
                             'condition_values': (
-                                [f"={dropdown['values']}"]
+                                [f"={dropdown['options']}"]
                                 if range_validation
-                                else dropdown['values']
+                                else dropdown['options']
                             ),
                             'strict': error_type == 'stop',
                             'showCustomUi': True,

@@ -51,10 +51,10 @@ class CheckTemplate(TypedDict):
 class Dropdown(TypedDict):
     """Column dropdown."""
 
-    values: List[str] | str
-    """Dropdown values as a list or cell range."""
+    options: List[str] | str
+    """Dropdown options as a list or cell range."""
     source: Literal['boolean', 'foreign_key', 'enum']
-    """Source of dropdown values."""
+    """Source of dropdown options."""
 
 
 class ForeignKeyReference(TypedDict):

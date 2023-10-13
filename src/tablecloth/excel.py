@@ -115,6 +115,8 @@ def write_template(
     package
         Frictionless Data Tabular Data Package specification.
         See https://specs.frictionlessdata.io/tabular-data-package.
+        Table names (``resource.name``) are used as sheet names and can be any string up
+        to 31 characters long.
     path
         Path of the created Microsoft Excel (.xlsx) file.
         If None, the result is returned as `xlsxwriter.Workbook`.
@@ -222,7 +224,7 @@ def write_template(
                 if dropdown:
                     validation = {
                         'validate': 'list',
-                        'value': dropdown['values'],
+                        'value': dropdown['options'],
                         'error_title': 'Invalid value',
                         'error_message': 'Value must be in the dropdown list',
                         'ignore_blank': True,

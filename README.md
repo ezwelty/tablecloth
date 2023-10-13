@@ -1,24 +1,19 @@
-`tablecloth`
+`tablecloth`: Spreadsheet templates for tabular data entry
 ============
 
 [![codecov](https://codecov.io/gh/ezwelty/tablecloth/branch/main/graph/badge.svg?token=RP9E7WLFCI)](https://codecov.io/gh/ezwelty/tablecloth)
 ![tests](https://github.com/ezwelty/tablecloth/actions/workflows/tests.yaml/badge.svg)
 
-Generate spreadsheet templates for data entry based on metadata.
-
 ## Installation
 
 ```sh
 pip install "tablecloth[excel,gsheets] @ git+https://github.com/ezwelty/tablecloth"
-# Or with only one output format supported:
-# pip install "tablecloth[excel] @ git+https://github.com/ezwelty/tablecloth"
-# pip install "tablecloth[gsheets] @ git+https://github.com/ezwelty/tablecloth"
 ```
 
 * `[excel]`: Adds (optional) support for Microsoft Excel
 * `[gsheets]`: Adds (optional) support for Google Sheets
 
-## Example
+## Usage
 
 ```py
 import tablecloth.excel
@@ -86,45 +81,37 @@ tablecloth.excel.write_template(
 
 ## Development
 
-Clone the repository and use `poetry` to install `tablecloth` into a virtual environment
-linked to your current Python version:
+Clone the repository, use `poetry` to install `tablecloth` and all its dependencies
+into a Python virtual environment, and run (most) tests:
 
 ```bash
 git clone https://github.com/ezwelty/tablecloth
 cd tablecloth
-poetry install
+poetry install --all-extras
+poetry run pytest --doctest-modules src tests
 ```
 
-To avoid committing code that breaks tests or violates the style guide,
-consider installing [`pre-commit`](https://pre-commit.com) (if needed)
+Consider installing [`pre-commit`](https://pre-commit.com) (if needed)
 and installing the hooks:
 
 ```bash
 pre-commit install
 ```
 
-Useful commands are listed in [`.pre-commit-config.yaml`](pre-commit-config.yaml).
-For example, to run most tests:
-
-```bash
-poetry run pytest --doctest-modules src tests
-```
-
 ### Google Sheets
 
-To run tests for Google Sheets, you will need to create a Google Cloud project,
-add a service account, and create and download a JSON key
-(see https://pygsheets.readthedocs.io/en/stable/authorization.html#service-account).
-Then, copy the example environment file:
+Running tests for Google Sheets requires a JSON key for a Google Cloud project service
+account (https://pygsheets.readthedocs.io/en/stable/authorization.html#service-account).
+Copy the example environment file:
 
 ```bash
 cp .env.example .env
 ```
 
-and fill in the content of the JSON key.
-Optionally, add your personal Google account email so that Google Sheets created by your
+and fill in the content of your JSON key.
+Optionally, add your Google account email so that Google Sheets created by your
 service account are shared with you.
-Once configured, use the `--gsheets` flag include Google Sheets tests:
+Once configured, use the `--gsheets` flag to include Google Sheets tests:
 
 ```bash
 poetry run pytest --doctest-modules src tests --gsheets

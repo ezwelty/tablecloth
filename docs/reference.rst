@@ -26,4 +26,4 @@ tablecloth.constants
 --------------------
 
 .. automodule:: tablecloth.constants
-   :members: Check, Constraints, ForeignKeyReference, ForeignKey
+   :members: Check, Constraints, Dropdown, ForeignKeyReference, ForeignKey
