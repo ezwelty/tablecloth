@@ -5,6 +5,9 @@
 .wy-nav-side {
   width: 250px;
 }
+.wy-side-nav-search {
+  width: 250px;
+}
 /* Increase width of content from 800 px */
 .wy-nav-content {
   max-width: 900px;
