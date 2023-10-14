@@ -2,7 +2,7 @@
 name = "tablecloth"
 version = "0.1.0"
 description = "Generate spreadsheet templates from dataset descriptions."
-authors = ["ezwelty <ethan.welty@gmail.com>"]
+authors = ["Ethan Welty <ethan.welty@gmail.com>"]
 license = "MIT"
 readme = "README.md"
 homepage = "https://github.com/ezwelty/tablecloth"
