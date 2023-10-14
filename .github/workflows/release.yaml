@@ -20,7 +20,7 @@ jobs:
         virtualenvs-create: true
         virtualenvs-in-project: true
     - name: Install library and dependencies
-      run: poetry install --all-extras --no-interaction
+      run: poetry install --all-extras --only test --no-interaction
     - name: Run tests - including Google Sheets
       env:
         GOOGLE_CLOUD_SERVICE_ACCOUNT_KEY: '${{ secrets.GOOGLE_CLOUD_SERVICE_ACCOUNT_KEY }}'
