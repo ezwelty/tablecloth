@@ -22,7 +22,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     name: ${{ matrix.os }} - python ${{ matrix.python-version }}
     env:
-      coverage: ${{ matrix.os == 'ubuntu-latest' && matrix.python-version == '3.8' }}
+      coverage: ${{ matrix.os == 'ubuntu-latest' && matrix.python-version == '3.9' }}
     steps:
       - name: Check out repository
         uses: actions/checkout@v3
@@ -41,12 +41,14 @@ jobs:
         uses: actions/cache@v3
         with:
           path: .venv
-          key: venv-${{ matrix.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
+          key: venv-${{ matrix.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}  
       - name: Install dependencies
         if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
         run: poetry install --all-extras --no-interaction --no-root
       - name: Install library
-        run: poetry install --all-extras --no-interaction
+        run: poetry install --all-extras --no-interaction --with test --without dev
+      - name: Install library for dev
+        run: poetry install --all-extras --no-interaction --with test --with dev
       - name: Run tests
         if: env.coverage != 'true'
         run: poetry run pytest --doctest-modules src tests
