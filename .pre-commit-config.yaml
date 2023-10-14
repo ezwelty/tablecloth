@@ -34,12 +34,12 @@ repos:
       entry: poetry run flake8
       language: system
       types: [python]
-    - id: typecheck
+    - id: type
       name: mypy
       entry: poetry run mypy
       language: system
       types: [python]
-    - id: docs
+    - id: doc
       name: sphinx
       entry: poetry run sphinx-build docs docs/_build
       language: system

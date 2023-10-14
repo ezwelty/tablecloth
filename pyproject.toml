@@ -26,15 +26,19 @@ pytest-cov = "^4.0.0"
 python-dotenv = "^1.0.0"
 PyYAML = "^6.0.1"
 
-[tool.poetry.group.lint.dependencies]
+[tool.poetry.group.format.dependencies]
 black = "^23.3.0"
 isort = "^5.12.0"
+
+[tool.poetry.group.lint.dependencies]
 flake8 = "^6.0.0"
 flake8-annotations = "^3.0.0"
-mypy = "^1.6.0"
-types-PyYAML = "^6.0.12.12"
 flake8-docstrings = "^1.7.0"
 pydoclint = {version = "^0.3.3", extras = ["flake8"]}
+
+[tool.poetry.group.type.dependencies]
+mypy = "^1.6.0"
+types-PyYAML = "^6.0.12.12"
 
 [tool.poetry.group.doc.dependencies]
 Sphinx = "^7.2.6"
