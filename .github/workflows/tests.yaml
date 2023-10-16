@@ -15,7 +15,7 @@ jobs:
     strategy:
       matrix:
         os: ['ubuntu-latest', 'macos-latest', 'windows-latest']
-        python-version: ['3.9', '3.12']
+        python-version: ['3.8', '3.9', '3.12']
     defaults:
       run:
         shell: bash
@@ -44,9 +44,9 @@ jobs:
           key: venv-${{ matrix.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
       - name: Install dependencies
         if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
-        run: poetry install --all-extras --no-interaction --no-root
+        run: poetry install --no-interaction --all-extras --only main,test --no-root
       - name: Install library
-        run: poetry install --all-extras --no-interaction
+        run: poetry install --no-interaction --all-extras --only-root
       - name: Run tests
         if: env.coverage != 'true'
         run: poetry run pytest --doctest-modules src tests
