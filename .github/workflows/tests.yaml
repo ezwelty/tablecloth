@@ -41,14 +41,12 @@ jobs:
         uses: actions/cache@v3
         with:
           path: .venv
-          key: venv-${{ matrix.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}  
+          key: venv-${{ matrix.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('**/poetry.lock') }}
       - name: Install dependencies
         if: steps.cached-poetry-dependencies.outputs.cache-hit != 'true'
-        run: poetry install --all-extras --no-interaction --no-root
+        run: poetry install --no-interaction --all-extras --only main,test --no-root
       - name: Install library
-        run: poetry install --all-extras --no-interaction --with test --without dev
-      - name: Install library for dev
-        run: poetry install --all-extras --no-interaction --with test --with dev
+        run: poetry install --no-interaction --all-extras --only-root
       - name: Run tests
         if: env.coverage != 'true'
         run: poetry run pytest --doctest-modules src tests

@@ -911,8 +911,8 @@ gsheets = ["pygsheets"]
 
 [metadata]
 lock-version = "1.1"
-python-versions = "^3.9"
-content-hash = "c904b877dbce390e0a7aa0ec26dfbdd8398a59d6e00f1e387aac83304c0a9f19"
+python-versions = "^3.8"
+content-hash = "a345784ae0e6b3361efd452f16665a70bb424eb566f5331fc926c30e3209963e"
 
 [metadata.files]
 alabaster = [
