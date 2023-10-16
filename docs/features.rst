@@ -108,3 +108,20 @@ but treats composite foreign keys (involving multiple columns) as multiple
 simple foreign keys (involving a single column).
 
 Full validation of composite foreign keys may follow in the future.
+
+Copy-paste
+----------
+
+.. warning::
+
+   By default, copy-pasting includes cell data validation and conditional formatting,
+   which can disrupt the behavior of the spreadsheet templates.
+
+For best results when copy-pasting, *paste values only*.
+
+* Google Sheets
+   * Windows: Edit > Paste special > Paste values only (`control-shift-v`)
+   * Mac: Edit > Paste special > Paste values only (`command-shift-v`)
+* Microsoft Excel
+   * Windows: Edit > Paste special… (`alt-control-v`) > Values
+   * Mac: Edit > Paste special… (`command-control-v`) > Values
