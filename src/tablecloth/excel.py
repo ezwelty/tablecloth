@@ -24,6 +24,35 @@ MAX_NAME_LENGTH: int = 31
 """Maximum length of sheet name."""
 
 
+def calculate_column_width(header: str, wrap: bool = False) -> float:
+    """
+    Calculate column width from header.
+
+    Width is 1.2 times the header length, and no less than 10.
+    If `wrap` is False, line breaks are ignored.
+    If `wrap` is True, only the longest line is considered.
+
+    Parameters
+    ----------
+    header
+        Column header.
+    wrap
+        Whether header text is wrapped.
+
+    Returns
+    -------
+    float
+        Column width in characters.
+    """
+    if wrap:
+        # Split text by newline and take the longest line
+        header = max(header.split('\n'), key=len)
+    else:
+        # Ignore newlines
+        header = header.replace('\n', '')
+    return max(10, len(header) * 1.2)
+
+
 def write_table(
     sheet: xlsxwriter.worksheet.Worksheet,
     header: List[str],
@@ -33,6 +62,7 @@ def write_table(
     comment_header: List[str] | None = None,
     format_comments: dict | None = None,
     hide_columns: bool = False,
+    column_widths: List[float | None] | None = None,
 ) -> None:
     """
     Write an empty table (with header) to a Microsoft Excel sheet.
@@ -60,6 +90,10 @@ def write_table(
         Whether to hide unused columns.
         Ignored if `comment_header` is True, as Excel prevents hiding columns that
         overlap a comment.
+    column_widths
+        Column widths in characters.
+        Default is 1.2 times the header length (and no less than 10);
+        see :func:`calculate_column_width`.
     """
     # Write header
     sheet.write_row(0, 0, header, format_header)
@@ -76,8 +110,12 @@ def write_table(
     if freeze_header:
         sheet.freeze_panes(1, 0)
     # Resize columns and add header comments
+    wrap = bool(format_header.text_wrap) if format_header else False
     for i, content in enumerate(header):
-        width = max(10, len(content) * 1.2)
+        if column_widths:
+            width = column_widths[i]
+        if not column_widths or width is None:
+            width = calculate_column_width(header=content, wrap=wrap)
         sheet.set_column(i, i, width=width)
         if comment_header and comment_header[i]:
             sheet.write_comment(0, i, comment_header[i], format_comments)
@@ -117,6 +155,7 @@ def write_template(
     freeze_header: bool = True,
     header_height: float | None = None,
     hide_columns: bool = False,
+    column_widths: Dict[str, List[float | None]] | None = None,
 ) -> xlsxwriter.Workbook | None:
     """
     Write a template for data entry to a Microsoft Excel workbook.
@@ -166,6 +205,11 @@ def write_template(
         See https://xlsxwriter.readthedocs.io/worksheet.html#set_row.
     hide_columns
         Whether to hide unused columns.
+    column_widths
+        For each table (with `resource.name` as dictionary key),
+        the widths in characters of each column (one value per column, None to skip).
+        Default is 1.2 times the length of the column name (and no less than 10);
+        see :func:`calculate_column_width`.
     """
     # ---- Initialize
     layout = Layout.from_package(
@@ -193,6 +237,7 @@ def write_template(
             freeze_header=freeze_header,
             header_height=header_height,
             hide_columns=hide_columns,
+            column_widths=(column_widths or {}).get(table_props['table']),
         )
 
     # ---- Write enums
