@@ -29,6 +29,7 @@ def write_table(
     header: List[str],
     freeze_header: bool = False,
     format_header: xlsxwriter.format.Format | None = None,
+    header_height: float | None = None,
     comment_header: List[str] | None = None,
     format_comments: dict | None = None,
     hide_columns: bool = False,
@@ -47,6 +48,9 @@ def write_table(
     format_header
         Whether and how to format header cells.
         See https://xlsxwriter.readthedocs.io/format.html.
+    header_height
+        Header row height in character units (default adjusts to content).
+        See https://xlsxwriter.readthedocs.io/worksheet.html#set_row.
     comment_header
         Whether and what text to add as a comment to each header cell (or None to skip).
     format_comments
@@ -59,6 +63,12 @@ def write_table(
     """
     # Write header
     sheet.write_row(0, 0, header, format_header)
+    # Set header height
+    if header_height is not None:
+        if header_height == 15:
+            # Force Excel to set height to 15 rather than auto (15 is the default)
+            header_height = header_height + 1e-3
+        sheet.set_row(0, header_height)
     # Hide unused columns
     if hide_columns and not comment_header:
         sheet.set_column(len(header), MAX_COLS - 1, options={'hidden': 1})
@@ -105,6 +115,7 @@ def write_template(
     format_header: dict | None = {'bold': True, 'bg_color': '#d3d3d3'},
     format_comments: dict | None = {'font_size': 11, 'x_scale': 2, 'y_scale': 2},
     freeze_header: bool = True,
+    header_height: float | None = None,
     hide_columns: bool = False,
 ) -> xlsxwriter.Workbook | None:
     """
@@ -150,6 +161,9 @@ def write_template(
         https://xlsxwriter.readthedocs.io/working_with_cell_comments.html#cell-comments.
     freeze_header
         Whether to freeze the header.
+    header_height
+        Header row height in character units (default adjusts to content).
+        See https://xlsxwriter.readthedocs.io/worksheet.html#set_row.
     hide_columns
         Whether to hide unused columns.
     """
@@ -177,6 +191,7 @@ def write_template(
             format_header=header_format,
             format_comments=format_comments,
             freeze_header=freeze_header,
+            header_height=header_height,
             hide_columns=hide_columns,
         )
 
