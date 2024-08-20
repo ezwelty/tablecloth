@@ -61,6 +61,7 @@ def write_table(
     header: List[str],
     freeze_header: bool = False,
     format_header: dict | None = None,
+    header_height: int | float | None = None,
     comment_header: List[str] | None = None,
     hide_columns: bool = False,
     column_widths: List[int | float | None] | None = None,
@@ -79,6 +80,8 @@ def write_table(
     format_header
         Whether and how to format header cells. See
         https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/cells?hl=en#cellformat
+    header_height
+        Header row height in pixels (default adjusts to content).
     comment_header
         Whether and what text to add as a note to each header cell (or None to skip).
     hide_columns
@@ -98,6 +101,8 @@ def write_table(
                 fields='userEnteredFormat',
                 cell_json={'userEnteredFormat': format_header},
             )
+        if header_height is not None:
+            sheet.adjust_row_height(1, 1, pixel_size=round(header_height))
         if freeze_header:
             sheet.frozen_rows = 1
         if comment_header:
@@ -177,6 +182,7 @@ def write_template(
         'backgroundColorStyle': {'rgbColor': {'red': 0.8, 'green': 0.8, 'blue': 0.8}},
         'verticalAlignment': 'TOP',
     },
+    header_height: int | float | None = None,
     freeze_header: bool = True,
     hide_columns: bool = False,
     column_widths: Dict[str, List[int | float | None]] | None = None,
@@ -224,6 +230,8 @@ def write_template(
     format_header
         Formatting for header cells. See
         https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/cells#CellFormat.
+    header_height
+        Header row height in pixels (default adjusts to content).
     freeze_header
         Whether to freeze the header.
     hide_columns
@@ -250,6 +258,7 @@ def write_template(
             header=table_props['columns'],
             comment_header=(header_comments or {}).get(table_props['table']),
             format_header=format_header,
+            header_height=header_height,
             freeze_header=freeze_header,
             hide_columns=hide_columns,
             column_widths=(column_widths or {}).get(table_props['table']),
