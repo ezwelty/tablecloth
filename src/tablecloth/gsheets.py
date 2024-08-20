@@ -35,6 +35,27 @@ def batched(client: pygsheets.client.Client) -> Iterator[pygsheets.client.Client
         client.set_batch_mode(False)
 
 
+def calculate_column_width(header: str) -> int:
+    """
+    Calculate column width from header.
+
+    Width is 9.24 times the header length, and no less than 77.
+    If `header` contains line breaks, only the longest line is considered.
+
+    Parameters
+    ----------
+    header
+        Column header.
+
+    Returns
+    -------
+    float
+        Column width in pixels.
+    """
+    header = max(header.split('\n'), key=len)
+    return round(max(10, len(header) * 1.2) * 7.7)
+
+
 def write_table(
     sheet: pygsheets.Worksheet,
     header: List[str],
@@ -42,6 +63,7 @@ def write_table(
     format_header: dict | None = None,
     comment_header: List[str] | None = None,
     hide_columns: bool = False,
+    column_widths: List[int | float | None] | None = None,
 ) -> None:
     """
     Write an empty table (with header) to a Google Sheets sheet.
@@ -61,6 +83,10 @@ def write_table(
         Whether and what text to add as a note to each header cell (or None to skip).
     hide_columns
         Whether to hide unused columns.
+    column_widths
+        Column widths in pixels.
+        Default is 9.24 times the header length (and no less than 77);
+        see :func:`calculate_column_width`.
     """
     ncols = len(header)
     header_range = pygsheets.DataRange((1, 1), (1, ncols), sheet)
@@ -82,11 +108,13 @@ def write_table(
                     )
         if hide_columns:
             sheet.resize(cols=ncols)
-        # Resize column widths to fit header values with some padding
-        # (automatic widths results in very narrow columns for small values)
-        for i, value in enumerate(header, start=1):
-            width = int(max(10, len(value) * 1.2) * 7.7)
-            sheet.adjust_column_width(i, i, pixel_size=width)
+        # Resize columns
+        for i, content in enumerate(header, start=1):
+            if column_widths:
+                width = column_widths[i - 1]
+            if not column_widths or width is None:
+                width = calculate_column_width(content)
+            sheet.adjust_column_width(i, i, pixel_size=round(width))
 
 
 def write_enum(sheet: pygsheets.Worksheet, values: list, col: int) -> None:
@@ -150,6 +178,7 @@ def write_template(
     },
     freeze_header: bool = True,
     hide_columns: bool = False,
+    column_widths: Dict[str, List[int | float | None]] | None = None,
 ) -> None:
     """
     Write a template for data entry to a Google Sheets workbook.
@@ -198,6 +227,11 @@ def write_template(
         Whether to freeze the header.
     hide_columns
         Whether to hide unused columns.
+    column_widths
+        For each table (with `resource.name` as dictionary key),
+        the widths in characters of each column (one value per column, None to skip).
+        Default is 9.24 times the length of the column name (and no less than 77);
+        see :func:`calculate_column_width`.
     """
     # ---- Initialize
     layout = Layout.from_package(
@@ -217,6 +251,7 @@ def write_template(
             format_header=format_header,
             freeze_header=freeze_header,
             hide_columns=hide_columns,
+            column_widths=(column_widths or {}).get(table_props['table']),
         )
 
     # --- Write enums
