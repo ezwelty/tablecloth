@@ -175,6 +175,7 @@ def write_template(
     | None = {
         'textFormat': {'bold': True},
         'backgroundColorStyle': {'rgbColor': {'red': 0.8, 'green': 0.8, 'blue': 0.8}},
+        'verticalAlignment': 'TOP',
     },
     freeze_header: bool = True,
     hide_columns: bool = False,
