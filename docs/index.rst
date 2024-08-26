@@ -93,7 +93,7 @@ Then use :func:`tablecloth.excel.write_template` to build a Microsoft Excel temp
 
 Or use :func:`tablecloth.gsheets.write_template` to build a Google Sheets
 template. To do so, first authorize access with :func:`pygsheets.authorize` and
-create (or open) a Google Sheets.
+create or open a spreadsheet with the resulting :class:`pygsheets.client.Client` object.
 
 .. code-block:: python
 
