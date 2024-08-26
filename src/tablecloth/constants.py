@@ -1,7 +1,10 @@
 """Custom types and other constants."""
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Dict, List, Literal, TypedDict
+
+import yaml
 
 
 class Table(TypedDict):
@@ -222,3 +225,10 @@ Formula templates to check whether a value is in a range.
 * row: First (minimum) row number.
 * range: Cell range to look in.
 """
+
+
+FONT_WIDTHS: Dict[str, Dict[int, float]] = {
+    path.stem: yaml.safe_load(path.read_text())
+    for path in Path(__file__).parent.joinpath('font_widths').glob('*.yaml')
+}
+"""Width (em) of each character in a font by font name and Unicode code point."""

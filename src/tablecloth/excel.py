@@ -1,8 +1,9 @@
 """Write Microsoft Excel templates."""
 from __future__ import annotations
 
+import math
 from pathlib import Path
-from typing import Dict, List, Literal, cast
+from typing import Any, Dict, List, Literal, cast
 
 try:
     import xlsxwriter
@@ -24,33 +25,93 @@ MAX_NAME_LENGTH: int = 31
 """Maximum length of sheet name."""
 
 
-def calculate_column_width(header: str, wrap: bool = False) -> float:
+def calculate_minimum_cell_width(
+    string: str,
+    family: str = 'calibri',
+    size: float = 11,
+    default_size: float = 11,
+    bold: bool = False,
+    italic: bool = False,
+) -> float:
     """
-    Calculate column width from header.
+    Calculate minimum cell width (in character units) to fit a string.
 
-    Width is 1.2 times the header length, and no less than 10.
-    If `wrap` is False, line breaks are ignored.
-    If `wrap` is True, only the longest line is considered.
+    Calculation of string width in pixels seems exact, but the calculation of padding
+    and conversion to character units is approximate and may not work in all Excel
+    versions, screen resolutions, etc.
+
+    Parameters
+    ----------
+    string
+        String to measure.
+    family
+        Font family name (only 'calibri' is supported).
+    size
+        Font size in points.
+    default_size
+        Default font size in points.
+    bold
+        Whether cell is bold.
+    italic
+        Whether cell is italic.
+
+    Raises
+    ------
+    NotImplementedError
+        Font family is not supported.
+    """
+    # DPI arbitrary after conversion to character units, but included for clarity
+    dpi = 96
+    # Load font widths
+    family = family.lower()
+    if family not in ['calibri']:
+        raise NotImplementedError(f'Font family {family} is not supported')
+    font = family
+    if bold:
+        font = f'{font}-bold'
+    if italic:
+        font = f'{font}-italic'
+    widths = constants.FONT_WIDTHS[font]
+    # Measure only the longest line in a multiline string
+    string = max(string.split('\n'), key=len)
+    em = sum(widths[ord(char)] for char in string)
+    content_px = round(em * size / 72 * dpi)
+    # Compute padding relative to '0' character width
+    # https://stackoverflow.com/a/61041831
+    zero_px = widths[ord('0')] * size / 72 * dpi
+    pad_px = round((zero_px + 1) / 4) * 2 + 1
+    px = content_px + pad_px
+    # Convert to character units based on '0' character width in default font size
+    default_zero_px = widths[ord('0')] * default_size / 72 * dpi
+    default_pad_px = round((default_zero_px + 1) / 4) * 2 + 1
+    default_zero_pad_px = zero_px + pad_px
+    return (
+        px / math.ceil(default_zero_pad_px)
+        if px < default_zero_pad_px
+        else (px - default_pad_px) / math.ceil(default_zero_px)
+    )
+
+
+def calculate_column_width(header: str, wrap: bool = False, **kwargs: Any) -> float:
+    """
+    Calculate column width (in character units) from header.
+
+    Width is the minimum width to fit the header plus 1.5 character units padding,
+    and no less than 9 character units.
 
     Parameters
     ----------
     header
         Column header.
     wrap
-        Whether header text is wrapped.
-
-    Returns
-    -------
-    float
-        Column width in characters.
+        Whether text wrapping is enabled.
+    **kwargs
+        Additional keyword arguments for :func:`calculate_minimum_cell_width`.
     """
-    if wrap:
-        # Split text by newline and take the longest line
-        header = max(header.split('\n'), key=len)
-    else:
-        # Ignore newlines
+    if not wrap:
         header = header.replace('\n', '')
-    return max(10, len(header) * 1.2)
+    minimum = calculate_minimum_cell_width(header, **kwargs)
+    return max(minimum + 1.5, 9)
 
 
 def write_table(
@@ -79,8 +140,7 @@ def write_table(
         Whether and how to format header cells.
         See https://xlsxwriter.readthedocs.io/format.html.
     header_height
-        Header row height in character units (default adjusts to content).
-        See https://xlsxwriter.readthedocs.io/worksheet.html#set_row.
+        Header row height in pixels (default adjusts to content, standard is 20).
     comment_header
         Whether and what text to add as a comment to each header cell (or None to skip).
     format_comments
@@ -91,18 +151,19 @@ def write_table(
         Ignored if `comment_header` is True, as Excel prevents hiding columns that
         overlap a comment.
     column_widths
-        Column widths in characters.
-        Default is 1.2 times the header length (and no less than 10);
-        see :func:`calculate_column_width`.
+        Width of each column in character units (or None to leave unchanged).
+        Default is the minimum width to fit the header plus 1.5 character units,
+        and no less than 9 character units.
+        See :func:`calculate_minimum_cell_width` as a starting point for customization.
     """
     # Write header
     sheet.write_row(0, 0, header, format_header)
     # Set header height
     if header_height is not None:
-        if header_height == 15:
-            # Force Excel to set height to 15 rather than auto (15 is the default)
+        if header_height == 20:
+            # Force Excel to set height (20 pixels = 15 characters default)
             header_height = header_height + 1e-3
-        sheet.set_row(0, header_height)
+        sheet.set_row_pixels(0, height=header_height)
     # Hide unused columns
     if hide_columns and not comment_header:
         sheet.set_column(len(header), MAX_COLS - 1, options={'hidden': 1})
@@ -110,12 +171,20 @@ def write_table(
     if freeze_header:
         sheet.freeze_panes(1, 0)
     # Resize columns and add header comments
-    wrap = bool(format_header.text_wrap) if format_header else False
+    format = format_header.__dict__ if format_header else {}
     for i, content in enumerate(header):
         if column_widths:
             width = column_widths[i]
         if not column_widths or width is None:
-            width = calculate_column_width(header=content, wrap=wrap)
+            # Determine final cell format
+            width = calculate_column_width(
+                header=content,
+                family=format.get('font_name', 'calibri'),
+                wrap=format.get('text_wrap', False),
+                size=format.get('font_size', 11),
+                bold=format.get('bold', False),
+                italic=format.get('italic', False),
+            )
         sheet.set_column(i, i, width=width)
         if comment_header and comment_header[i]:
             sheet.write_comment(0, i, comment_header[i], format_comments)
@@ -150,7 +219,7 @@ def write_template(
     error_type: Literal['information', 'warning', 'stop'] | None = None,
     validate_foreign_keys: bool = True,
     format_invalid: dict | None = {'bg_color': '#ffc7ce'},
-    format_header: dict | None = {'bold': True, 'bg_color': '#d3d3d3'},
+    format_header: dict | None = {'bold': True, 'bg_color': '#d3d3d3', 'valign': 'top'},
     format_comments: dict | None = {'font_size': 11, 'x_scale': 2, 'y_scale': 2},
     freeze_header: bool = True,
     header_height: float | None = None,
@@ -201,15 +270,15 @@ def write_template(
     freeze_header
         Whether to freeze the header.
     header_height
-        Header row height in character units (default adjusts to content).
-        See https://xlsxwriter.readthedocs.io/worksheet.html#set_row.
+        Header row height in pixels (default adjusts to content, standard is 20).
     hide_columns
         Whether to hide unused columns.
     column_widths
         For each table (with `resource.name` as dictionary key),
-        the widths in characters of each column (one value per column, None to skip).
-        Default is 1.2 times the length of the column name (and no less than 10);
-        see :func:`calculate_column_width`.
+        the widths in pixels of each column (one value per column, None to skip).
+        Default is the minimum width to fit the header plus 1.5 character units,
+        and no less than 9 character units.
+        See :func:`calculate_minimum_cell_width` as a starting point for customization
     """
     # ---- Initialize
     layout = Layout.from_package(

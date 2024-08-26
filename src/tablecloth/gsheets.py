@@ -1,8 +1,9 @@
 """Write Google Sheets templates."""
 from __future__ import annotations
 
+import math
 from contextlib import contextmanager
-from typing import Dict, Iterator, List, Literal
+from typing import Any, Dict, Iterator, List, Literal
 
 try:
     import pygsheets
@@ -11,7 +12,7 @@ try:
 except ImportError:
     raise ImportError('Writing Google Sheets templates requires `pygsheets`')
 
-from . import helpers
+from . import constants, helpers
 from .layout import Layout
 
 MAX_NAME_LENGTH: int = 100
@@ -35,25 +36,72 @@ def batched(client: pygsheets.client.Client) -> Iterator[pygsheets.client.Client
         client.set_batch_mode(False)
 
 
-def calculate_column_width(header: str) -> int:
+def calculate_minimum_cell_width(
+    string: str,
+    family: str = 'arial',
+    size: float = 10,
+    bold: bool = False,
+    italic: bool = False,
+    dpi: float = 96,
+) -> float:
     """
-    Calculate column width from header.
+    Calculate minimum cell width (pixels) to fit a string.
 
-    Width is 9.24 times the header length, and no less than 77.
-    If `header` contains line breaks, only the longest line is considered.
+    Parameters
+    ----------
+    string
+        String to measure.
+    family
+        Font family name (only 'arial' or 'calibri' is supported).
+    size
+        Font size in points.
+    bold
+        Whether cell is bold.
+    italic
+        Whether cell is italic.
+    dpi
+        Display dots per inch (dpi) assumed by Google Sheets (96 dpi).
+
+    Raises
+    ------
+    NotImplementedError
+        Font family is not supported.
+    """
+    # Load font widths
+    family = family.lower()
+    if family not in ['arial', 'calibri']:
+        raise NotImplementedError(f'Font family {family} is not supported')
+    font = family
+    if bold:
+        font = f'{font}-bold'
+    if italic:
+        font = f'{font}-italic'
+    widths = constants.FONT_WIDTHS[font]
+    # Measure only the longest line in a multiline string
+    string = max(string.split('\n'), key=len)
+    em = sum(widths[ord(char)] for char in string)
+    points = size * em
+    inches = points / 72
+    # Google Sheets applies 3-pixel padding on each side
+    return inches * dpi + 2 * 3
+
+
+def calculate_column_width(header: str, **kwargs: Any) -> float:
+    """
+    Calculate column width (in pixels) from header.
+
+    Width is the minimum width to fit the header plus 10 pixels padding,
+    and no less than 70 pixels.
 
     Parameters
     ----------
     header
         Column header.
-
-    Returns
-    -------
-    float
-        Column width in pixels.
+    **kwargs
+        Additional keyword arguments for :func:`calculate_minimum_cell_width`.
     """
-    header = max(header.split('\n'), key=len)
-    return round(max(10, len(header) * 1.2) * 7.7)
+    minimum = calculate_minimum_cell_width(header, **kwargs)
+    return max(minimum + 10, 70)
 
 
 def write_table(
@@ -78,7 +126,7 @@ def write_table(
     freeze_header
         Whether to freeze the header.
     format_header
-        Whether and how to format header cells. See
+        Format to apply to header cells. See
         https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/cells?hl=en#cellformat
     header_height
         Header row height in pixels (default adjusts to content).
@@ -87,12 +135,16 @@ def write_table(
     hide_columns
         Whether to hide unused columns.
     column_widths
-        Column widths in pixels.
-        Default is 9.24 times the header length (and no less than 77);
-        see :func:`calculate_column_width`.
+        Width of each column in pixels (or None to leave unchanged).
+        Default is the minimum width to fit the header plus 10 pixels padding,
+        and no less than 70 pixels.
+        See :func:`calculate_minimum_cell_width` as a starting point for customization.
     """
     ncols = len(header)
     header_range = pygsheets.DataRange((1, 1), (1, ncols), sheet)
+    if not column_widths:
+        # Load any existing cell text format to calculate column widths
+        header_range.fetch()
     with batched(sheet.client):
         header_range.update_values([header])
         if format_header:
@@ -102,7 +154,7 @@ def write_table(
                 cell_json={'userEnteredFormat': format_header},
             )
         if header_height is not None:
-            sheet.adjust_row_height(1, 1, pixel_size=round(header_height))
+            sheet.adjust_row_height(1, 1, pixel_size=header_height)
         if freeze_header:
             sheet.frozen_rows = 1
         if comment_header:
@@ -118,8 +170,18 @@ def write_table(
             if column_widths:
                 width = column_widths[i - 1]
             if not column_widths or width is None:
-                width = calculate_column_width(content)
-            sheet.adjust_column_width(i, i, pixel_size=round(width))
+                # Determine final cell format
+                format = header_range.cells[0][i - 1].text_format or {}
+                if format_header:
+                    format = {**format, **format_header.get('textFormat', {})}
+                width = calculate_column_width(
+                    content,
+                    family=format.get('fontFamily', 'arial'),
+                    size=format.get('fontSize', 10),
+                    bold=format.get('bold', False),
+                    italic=format.get('italic', False),
+                )
+            sheet.adjust_column_width(i, i, pixel_size=math.ceil(width))
 
 
 def write_enum(sheet: pygsheets.Worksheet, values: list, col: int) -> None:
@@ -238,9 +300,10 @@ def write_template(
         Whether to hide unused columns.
     column_widths
         For each table (with `resource.name` as dictionary key),
-        the widths in characters of each column (one value per column, None to skip).
-        Default is 9.24 times the length of the column name (and no less than 77);
-        see :func:`calculate_column_width`.
+        the widths in pixels of each column (one value per column, None to skip).
+        Default is the minimum width to fit the header plus 10 pixels padding,
+        and no less than 70 pixels.
+        See :func:`calculate_minimum_cell_width` as a starting point for customization
     """
     # ---- Initialize
     layout = Layout.from_package(
