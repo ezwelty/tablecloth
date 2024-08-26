@@ -225,7 +225,8 @@ def write_template(
     error_type: Literal['information', 'warning', 'stop'] | None = None,
     validate_foreign_keys: bool = True,
     format_invalid: dict | None = {'bg_color': '#ffc7ce'},
-    format_header: dict | None = {'bold': True, 'bg_color': '#d3d3d3', 'valign': 'top'},
+    format_header: dict
+    | None = {'bold': True, 'bg_color': '#d3d3d3', 'valign': 'top', 'text_wrap': True},
     format_comments: dict | None = {'font_size': 11, 'x_scale': 2, 'y_scale': 2},
     freeze_header: bool = True,
     header_height: float | None = None,
