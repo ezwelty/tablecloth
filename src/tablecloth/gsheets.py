@@ -1,8 +1,9 @@
 """Write Google Sheets templates."""
 from __future__ import annotations
 
+import math
 from contextlib import contextmanager
-from typing import Dict, Iterator, List, Literal
+from typing import Any, Dict, Iterator, List, Literal
 
 try:
     import pygsheets
@@ -11,7 +12,7 @@ try:
 except ImportError:
     raise ImportError('Writing Google Sheets templates requires `pygsheets`')
 
-from . import helpers
+from . import constants, helpers
 from .layout import Layout
 
 MAX_NAME_LENGTH: int = 100
@@ -35,13 +36,85 @@ def batched(client: pygsheets.client.Client) -> Iterator[pygsheets.client.Client
         client.set_batch_mode(False)
 
 
+def calculate_minimum_cell_width(
+    string: str,
+    family: str = 'arial',
+    size: float = 10,
+    bold: bool = False,
+    italic: bool = False,
+    dpi: float = 96,
+) -> float:
+    """
+    Calculate minimum cell width (pixels) to fit a string.
+
+    Parameters
+    ----------
+    string
+        String to measure.
+    family
+        Font family name. See :data:`.constants.FONT_FAMILIES` for which are supported.
+    size
+        Font size in points.
+    bold
+        Whether cell is bold.
+    italic
+        Whether cell is italic.
+    dpi
+        Display dots per inch (dpi) assumed by Google Sheets (96 dpi).
+
+    Raises
+    ------
+    NotImplementedError
+        Font family is not supported.
+    """
+    # Load font widths
+    font = family.lower()
+    if font not in constants.FONT_FAMILIES:
+        raise NotImplementedError(
+            f"Font family '{family}' is not supported. "
+            f'Use one of {constants.FONT_FAMILIES}'
+        )
+    if bold:
+        font = f'{font}-bold'
+    if italic:
+        font = f'{font}-italic'
+    widths = constants.FONT_WIDTHS[font]
+    # Measure only the longest line in a multiline string
+    string = max(string.split('\n'), key=len)
+    em = sum(widths[ord(char)] for char in string)
+    points = size * em
+    inches = points / 72
+    # Google Sheets applies 3-pixel padding on each side
+    return inches * dpi + 2 * 3
+
+
+def calculate_column_width(header: str, **kwargs: Any) -> float:
+    """
+    Calculate column width (in pixels) from header.
+
+    Width is the minimum width to fit the header plus 10 pixels padding,
+    and no less than 70 pixels.
+
+    Parameters
+    ----------
+    header
+        Column header.
+    **kwargs
+        Additional keyword arguments for :func:`calculate_minimum_cell_width`.
+    """
+    minimum = calculate_minimum_cell_width(header, **kwargs)
+    return max(minimum + 10, 70)
+
+
 def write_table(
     sheet: pygsheets.Worksheet,
     header: List[str],
     freeze_header: bool = False,
     format_header: dict | None = None,
+    header_height: int | float | None = None,
     comment_header: List[str] | None = None,
     hide_columns: bool = False,
+    column_widths: List[int | float | None] | None = None,
 ) -> None:
     """
     Write an empty table (with header) to a Google Sheets sheet.
@@ -55,15 +128,25 @@ def write_table(
     freeze_header
         Whether to freeze the header.
     format_header
-        Whether and how to format header cells. See
+        Format to apply to header cells. See
         https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/cells?hl=en#cellformat
+    header_height
+        Header row height in pixels (default adjusts to content).
     comment_header
         Whether and what text to add as a note to each header cell (or None to skip).
     hide_columns
         Whether to hide unused columns.
+    column_widths
+        Width of each column in pixels (or None to leave unchanged).
+        Default is the minimum width to fit the header plus 10 pixels padding,
+        and no less than 70 pixels.
+        See :func:`calculate_minimum_cell_width` as a starting point for customization.
     """
     ncols = len(header)
     header_range = pygsheets.DataRange((1, 1), (1, ncols), sheet)
+    if not column_widths:
+        # Load any existing cell text format to calculate column widths
+        header_range.fetch()
     with batched(sheet.client):
         header_range.update_values([header])
         if format_header:
@@ -72,6 +155,8 @@ def write_table(
                 fields='userEnteredFormat',
                 cell_json={'userEnteredFormat': format_header},
             )
+        if header_height is not None:
+            sheet.adjust_row_height(1, 1, pixel_size=header_height)
         if freeze_header:
             sheet.frozen_rows = 1
         if comment_header:
@@ -82,11 +167,23 @@ def write_table(
                     )
         if hide_columns:
             sheet.resize(cols=ncols)
-        # Resize column widths to fit header values with some padding
-        # (automatic widths results in very narrow columns for small values)
-        for i, value in enumerate(header, start=1):
-            width = int(max(10, len(value) * 1.2) * 7.7)
-            sheet.adjust_column_width(i, i, pixel_size=width)
+        # Resize columns
+        for i, content in enumerate(header, start=1):
+            if column_widths:
+                width = column_widths[i - 1]
+            if not column_widths or width is None:
+                # Determine final cell format
+                format = header_range.cells[0][i - 1].text_format or {}
+                if format_header:
+                    format = {**format, **format_header.get('textFormat', {})}
+                width = calculate_column_width(
+                    content,
+                    family=format.get('fontFamily', 'arial'),
+                    size=format.get('fontSize', 10),
+                    bold=format.get('bold', False),
+                    italic=format.get('italic', False),
+                )
+            sheet.adjust_column_width(i, i, pixel_size=math.ceil(width))
 
 
 def write_enum(sheet: pygsheets.Worksheet, values: list, col: int) -> None:
@@ -147,9 +244,12 @@ def write_template(
     | None = {
         'textFormat': {'bold': True},
         'backgroundColorStyle': {'rgbColor': {'red': 0.8, 'green': 0.8, 'blue': 0.8}},
+        'verticalAlignment': 'TOP',
     },
+    header_height: int | float | None = None,
     freeze_header: bool = True,
     hide_columns: bool = False,
+    column_widths: Dict[str, List[int | float | None]] | None = None,
 ) -> None:
     """
     Write a template for data entry to a Google Sheets workbook.
@@ -161,7 +261,7 @@ def write_template(
     package
         Frictionless Data Tabular Data Package specification.
         See https://specs.frictionlessdata.io/tabular-data-package.
-        Table names (``resource.name``) are used as sheet names and can be any string up
+        Table names (`resource.name`) are used as sheet names and can be any string up
         to 100 characters long.
     book
         Workbook.
@@ -194,10 +294,18 @@ def write_template(
     format_header
         Formatting for header cells. See
         https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/cells#CellFormat.
+    header_height
+        Header row height in pixels (default adjusts to content).
     freeze_header
         Whether to freeze the header.
     hide_columns
         Whether to hide unused columns.
+    column_widths
+        For each table (with `resource.name` as dictionary key),
+        the widths in pixels of each column (one value per column, None to skip).
+        Default is the minimum width to fit the header plus 10 pixels padding,
+        and no less than 70 pixels.
+        See :func:`calculate_minimum_cell_width` as a starting point for customization
     """
     # ---- Initialize
     layout = Layout.from_package(
@@ -215,8 +323,10 @@ def write_template(
             header=table_props['columns'],
             comment_header=(header_comments or {}).get(table_props['table']),
             format_header=format_header,
+            header_height=header_height,
             freeze_header=freeze_header,
             hide_columns=hide_columns,
+            column_widths=(column_widths or {}).get(table_props['table']),
         )
 
     # --- Write enums
