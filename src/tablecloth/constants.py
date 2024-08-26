@@ -232,3 +232,7 @@ FONT_WIDTHS: Dict[str, Dict[int, float]] = {
     for path in Path(__file__).parent.joinpath('font_widths').glob('*.yaml')
 }
 """Width (em) of each character in a font by font name and Unicode code point."""
+
+
+FONT_FAMILIES: List[str] = [font for font in FONT_WIDTHS if '-' not in font]
+"""Supported font families."""

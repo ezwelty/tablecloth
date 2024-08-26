@@ -52,7 +52,7 @@ def calculate_minimum_cell_width(
     string
         String to measure.
     family
-        Font family name (only 'arial' or 'calibri' is supported).
+        Font family name. See :data:`constants.FONT_FAMILIES` for which are supported.
     size
         Font size in points.
     bold
@@ -68,10 +68,12 @@ def calculate_minimum_cell_width(
         Font family is not supported.
     """
     # Load font widths
-    family = family.lower()
-    if family not in ['arial', 'calibri']:
-        raise NotImplementedError(f'Font family {family} is not supported')
-    font = family
+    font = family.lower()
+    if font not in constants.FONT_FAMILIES:
+        raise NotImplementedError(
+            f"Font family '{family}' is not supported. "
+            f'Use one of {constants.FONT_FAMILIES}'
+        )
     if bold:
         font = f'{font}-bold'
     if italic:

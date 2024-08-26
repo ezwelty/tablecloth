@@ -29,7 +29,6 @@ def calculate_minimum_cell_width(
     string: str,
     family: str = 'calibri',
     size: float = 11,
-    default_size: float = 11,
     bold: bool = False,
     italic: bool = False,
 ) -> float:
@@ -40,16 +39,17 @@ def calculate_minimum_cell_width(
     and conversion to character units is approximate and may not work in all Excel
     versions, screen resolutions, etc.
 
+    Assumes that the user's default font is Calibri, 11 point, non-bold, non-italic
+    (this is the default in Excel 2007+).
+
     Parameters
     ----------
     string
         String to measure.
     family
-        Font family name (only 'calibri' is supported).
+        Font family name. See :data:`constants.FONT_FAMILIES` for which are supported.
     size
         Font size in points.
-    default_size
-        Default font size in points.
     bold
         Whether cell is bold.
     italic
@@ -62,11 +62,16 @@ def calculate_minimum_cell_width(
     """
     # DPI arbitrary after conversion to character units, but included for clarity
     dpi = 96
+    # Assume default font is Calibri, 11 point, non-bold, non-italic
+    default_font = 'calibri'
+    default_size = 11
     # Load font widths
-    family = family.lower()
-    if family not in ['calibri']:
-        raise NotImplementedError(f'Font family {family} is not supported')
-    font = family
+    font = family.lower()
+    if font not in constants.FONT_FAMILIES:
+        raise NotImplementedError(
+            f"Font family '{family}' is not supported. "
+            f'Use one of {constants.FONT_FAMILIES}'
+        )
     if bold:
         font = f'{font}-bold'
     if italic:
@@ -82,7 +87,8 @@ def calculate_minimum_cell_width(
     pad_px = round((zero_px + 1) / 4) * 2 + 1
     px = content_px + pad_px
     # Convert to character units based on '0' character width in default font size
-    default_zero_px = widths[ord('0')] * default_size / 72 * dpi
+    default_widths = constants.FONT_WIDTHS[default_font]
+    default_zero_px = default_widths[ord('0')] * default_size / 72 * dpi
     default_pad_px = round((default_zero_px + 1) / 4) * 2 + 1
     default_zero_pad_px = zero_px + pad_px
     return (
