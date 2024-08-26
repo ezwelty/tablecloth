@@ -229,7 +229,7 @@ Formula templates to check whether a value is in a range.
 
 FONT_WIDTHS: Dict[str, Dict[int, float]] = {
     path.stem: yaml.safe_load(path.read_text())
-    for path in Path(__file__).parent.joinpath('font_widths').glob('*.yaml')
+    for path in sorted(Path(__file__).parent.joinpath('font_widths').glob('*.yaml'))
 }
 """Width (em) of each character in a font by font name and Unicode code point."""
 
