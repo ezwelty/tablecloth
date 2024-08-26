@@ -47,7 +47,7 @@ def calculate_minimum_cell_width(
     string
         String to measure.
     family
-        Font family name. See :data:`constants.FONT_FAMILIES` for which are supported.
+        Font family name. See :data:`.constants.FONT_FAMILIES` for which are supported.
     size
         Font size in points.
     bold
@@ -240,11 +240,11 @@ def write_template(
     package
         Frictionless Data Tabular Data Package specification.
         See https://specs.frictionlessdata.io/tabular-data-package.
-        Table names (``resource.name``) are used as sheet names and can be any string up
+        Table names (`resource.name`) are used as sheet names and can be any string up
         to 31 characters long.
     path
         Path of the created Microsoft Excel (.xlsx) file.
-        If None, the result is returned as `xlsxwriter.Workbook`.
+        If None, the result is returned as :class:`xlsxwriter.Workbook`.
     enum_sheet
         Name of sheet used for enumerated value constraints.
     header_comments
