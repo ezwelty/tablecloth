@@ -146,7 +146,8 @@ def write_table(
         Whether and how to format header cells.
         See https://xlsxwriter.readthedocs.io/format.html.
     header_height
-        Header row height in pixels (default adjusts to content, standard is 20).
+        Header row height in character units
+        (default adjusts to content, standard is 15).
     comment_header
         Whether and what text to add as a comment to each header cell (or None to skip).
     format_comments
@@ -166,10 +167,10 @@ def write_table(
     sheet.write_row(0, 0, header, format_header)
     # Set header height
     if header_height is not None:
-        if header_height == 20:
-            # Force Excel to set height (20 pixels = 15 characters default)
+        if header_height == 15:
+            # Force Excel to set height (15 characters is the default)
             header_height = header_height + 1e-3
-        sheet.set_row_pixels(0, height=header_height)
+        sheet.set_row(0, height=header_height)
     # Hide unused columns
     if hide_columns and not comment_header:
         sheet.set_column(len(header), MAX_COLS - 1, options={'hidden': 1})
@@ -277,7 +278,8 @@ def write_template(
     freeze_header
         Whether to freeze the header.
     header_height
-        Header row height in pixels (default adjusts to content, standard is 20).
+        Header row height in character units
+        (default adjusts to content, standard is 15).
     hide_columns
         Whether to hide unused columns.
     column_widths
