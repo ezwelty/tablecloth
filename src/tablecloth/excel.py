@@ -284,7 +284,7 @@ def write_template(
         Whether to hide unused columns.
     column_widths
         For each table (with `resource.name` as dictionary key),
-        the widths in pixels of each column (one value per column, None to skip).
+        the widths in character units of each column (one per column, None to skip).
         Default is the minimum width to fit the header plus 1.5 character units,
         and no less than 9 character units.
         See :func:`calculate_minimum_cell_width` as a starting point for customization
