@@ -1,10 +1,9 @@
 """Custom types and other constants."""
 from __future__ import annotations
 
+import pickle
 from pathlib import Path
 from typing import Dict, List, Literal, TypedDict
-
-import yaml
 
 
 class Table(TypedDict):
@@ -228,8 +227,8 @@ Formula templates to check whether a value is in a range.
 
 
 FONT_WIDTHS: Dict[str, Dict[int, float]] = {
-    path.stem: yaml.safe_load(path.read_text())
-    for path in sorted(Path(__file__).parent.joinpath('font_widths').glob('*.yaml'))
+    path.stem: pickle.load(path.open('rb'))
+    for path in sorted(Path(__file__).parent.joinpath('font_widths').glob('*.pkl'))
 }
 """Width (em) of each character in a font by font name and Unicode code point."""
 
