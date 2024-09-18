@@ -247,6 +247,7 @@ def write_template(
         'textFormat': {'bold': True},
         'backgroundColorStyle': {'rgbColor': {'red': 0.8, 'green': 0.8, 'blue': 0.8}},
         'verticalAlignment': 'TOP',
+        'wrapStrategy': 'WRAP',
     },
     header_height: int | float | None = None,
     freeze_header: bool = True,
