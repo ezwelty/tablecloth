@@ -191,6 +191,11 @@ def merge_conditions(
     return merge_formulas(fs, operator=operator)
 
 
+def escape_braces(x: str) -> str:
+    """Escape braces in a string by doubling them."""
+    return x.replace('{', '{{').replace('}', '}}')
+
+
 def build_column_condition(
     checks: List[constants.Check], valid: bool, col: str, row: int = 2
 ) -> str | None:
@@ -220,7 +225,7 @@ def build_column_condition(
     if not checks:
         return None
     formula = merge_conditions(
-        formulas=[x['formula'] for x in checks],
+        formulas=[escape_braces(x['formula']) for x in checks],
         valid=valid,
         ignore_blanks=[x['ignore_blank'] for x in checks],
     )
