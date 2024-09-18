@@ -81,7 +81,9 @@ def calculate_minimum_cell_width(
     widths = constants.FONT_WIDTHS[font]
     # Measure only the longest line in a multiline string
     string = max(string.split('\n'), key=len)
-    em = sum(widths[ord(char)] for char in string)
+    # Compute content width in pixels. Assume average width for missing glyphs
+    mean_em = sum(widths.values()) / len(widths)
+    em = sum(widths.get(ord(char), mean_em) for char in string)
     points = size * em
     inches = points / 72
     # Google Sheets applies 3-pixel padding on each side

@@ -79,7 +79,9 @@ def calculate_minimum_cell_width(
     widths = constants.FONT_WIDTHS[font]
     # Measure only the longest line in a multiline string
     string = max(string.split('\n'), key=len)
-    em = sum(widths[ord(char)] for char in string)
+    # Compute content width in pixels. Assume average width for missing glyphs
+    mean_em = sum(widths.values()) / len(widths)
+    em = sum(widths.get(ord(char), mean_em) for char in string)
     content_px = round(em * size / 72 * dpi)
     # Compute padding relative to '0' character width
     # https://stackoverflow.com/a/61041831
