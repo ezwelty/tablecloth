@@ -2,6 +2,7 @@
 import pytest
 
 from tablecloth import Layout
+from tablecloth.constants import Constraints
 
 
 def test_gets_a_column_code() -> None:
@@ -136,3 +137,19 @@ def test_sets_same_enum_multiple_times() -> None:
     layout.set_enum([1, 2])
     layout.set_enum([1, 2])
     assert len(layout.enums) == 1
+
+
+@pytest.mark.parametrize('constraint', ['minimum', 'maximum', 'minLength', 'maxLength'])
+def test_adds_check_for_constraint_equal_to_zero(constraint: str) -> None:
+    """It adds a check for a constraint equal to zero."""
+    table, column = 'a', 'x'
+    layout = Layout()
+    layout.set_table(table, [column])
+    checks = layout.gather_column_checks(
+        table,
+        column,
+        valid=True,
+        # HACK: Cast to Constraints to avoid mypy error
+        constraints=Constraints(**{constraint: 0}),
+    )
+    assert checks

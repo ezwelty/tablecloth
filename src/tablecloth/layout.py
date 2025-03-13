@@ -423,7 +423,8 @@ class Layout:
             {
                 helpers.camel_to_snake_case(key): value
                 for key, value in (constraints or {}).items()
-                if value not in (None, False, '', [])
+                # Ignore falsy values except 0
+                if value or (isinstance(value, (int, float)) and value == 0)
             },
         )
 
