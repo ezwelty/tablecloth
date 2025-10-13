@@ -54,7 +54,15 @@ def get_book(name: str) -> pygsheets.Spreadsheet:
 @pytest.mark.gsheets
 @pytest.mark.parametrize(
     'name, arguments',
-    [('warning-hide-columns', {'hide_columns': True, 'error_type': 'warning'})],
+    [
+        ('default', {}),
+        ('warning-hide-columns', {'hide_columns': True, 'error_type': 'warning'}),
+        (
+            'format-columns',
+            {'format_columns': {'fkey-simple': [{'numberFormat': {'type': 'TEXT'}}]}},
+        ),
+        ('column-widths', {'column_widths': {'fkey-simple': [200]}}),
+    ],
 )
 def test_writes_template(name: str, arguments: dict) -> None:
     """It writes a Google Sheets template."""

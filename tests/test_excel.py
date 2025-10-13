@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import datetime
-import tempfile
 import zipfile
 from pathlib import Path
 from typing import Any, List
@@ -67,6 +66,8 @@ def read_xlsx_as_string(path: str | Path) -> str:
             {'error_type': 'information', 'validate_foreign_keys': False},
         ),
         ('hide-columns', {'hide_columns': True, 'header_comments': None}),
+        ('format-columns', {'format_columns': {'fkey-simple': [{'num_format': '@'}]}}),
+        ('column-widths', {'column_widths': {'fkey-simple': [20]}}),
     ],
 )
 def test_writes_template(name: str, arguments: dict) -> None:
@@ -86,12 +87,3 @@ def test_writes_template(name: str, arguments: dict) -> None:
     kwargs = {'header_comments': comments, **arguments}
     write_indempotent_template(package=package, path=actual, **kwargs)
     assert read_xlsx_as_string(actual) == read_xlsx_as_string(expected)
-
-
-def test_writes_template_to_file() -> None:
-    """It writes an Excel file to the given path."""
-    package = {'resources': [{'name': 'table', 'schema': {'fields': [{'name': 'x'}]}}]}
-    with tempfile.TemporaryDirectory() as directory:
-        path = Path(directory) / 'test.xlsx'
-        tablecloth.excel.write_template(package, path=path)
-        assert path.exists()
