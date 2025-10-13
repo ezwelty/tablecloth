@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import math
+from collections import defaultdict
 from pathlib import Path
 from typing import Any, Dict, List, Literal, cast
 
@@ -132,6 +133,7 @@ def write_table(
     format_comments: dict | None = None,
     hide_columns: bool = False,
     column_widths: List[float | None] | None = None,
+    format_columns: List[xlsxwriter.format.Format | None] | None = None,
 ) -> None:
     """
     Write an empty table (with header) to a Microsoft Excel sheet.
@@ -164,6 +166,10 @@ def write_table(
         Default is the minimum width to fit the header plus 1.5 character units,
         and no less than 9 character units.
         See :func:`calculate_minimum_cell_width` as a starting point for customization.
+    format_columns
+        Whether and how to format each column
+        (including the header row unless `format_header` is provided)
+        See https://xlsxwriter.readthedocs.io/format.html.
     """
     # Write header
     sheet.write_row(0, 0, data=header, cell_format=format_header)
@@ -194,7 +200,11 @@ def write_table(
                 bold=format.get('bold', False),
                 italic=format.get('italic', False),
             )
-        sheet.set_column(i, i, width=width)
+        if format_columns:
+            column_format = format_columns[i]
+        else:
+            column_format = None
+        sheet.set_column(i, i, width=width, cell_format=column_format)
         if comment_header and comment_header[i]:
             sheet.write_comment(
                 0, i, comment=comment_header[i], options=format_comments
@@ -237,6 +247,7 @@ def write_template(
     header_height: float | None = None,
     hide_columns: bool = False,
     column_widths: Dict[str, List[float | None]] | None = None,
+    format_columns: Dict[str, List[dict | None]] | None = None,
 ) -> xlsxwriter.Workbook | None:
     """
     Write a template for data entry to a Microsoft Excel workbook.
@@ -291,7 +302,12 @@ def write_template(
         the widths in character units of each column (one per column, None to skip).
         Default is the minimum width to fit the header plus 1.5 character units,
         and no less than 9 character units.
-        See :func:`calculate_minimum_cell_width` as a starting point for customization
+        See :func:`calculate_minimum_cell_width` as a starting point for customization.
+    format_columns
+        For each table (with `resource.name` as dictionary key),
+        the default cell format of the column
+        (including the header row unless `format_header` is provided).
+        See https://xlsxwriter.readthedocs.io/format.html.
     """
     # ---- Initialize
     layout = Layout.from_package(
@@ -302,14 +318,25 @@ def write_template(
     )
     book = xlsxwriter.Workbook(filename=path)
     # Register formats
+    invalid_format = None
     if format_invalid:
         invalid_format = book.add_format(format_invalid)
-    else:
-        invalid_format = None
+    header_format = None
     if format_header:
         header_format = book.add_format(format_header)
-    else:
-        header_format = None
+    column_formats: Dict[str, List[str | None]] | None = None
+    if format_columns:
+        lookup = {}
+        column_formats = defaultdict(list)
+        for table, columns in format_columns.items():
+            for column_dict in columns:
+                if column_dict is None:
+                    column_formats[table].append(None)
+                    continue
+                hashable = tuple(sorted(column_dict.items()))
+                if hashable not in lookup:
+                    lookup[hashable] = book.add_format(column_dict)
+                column_formats[table].append(lookup[hashable])
 
     # ---- Write tables
     for table_props in layout.tables:
@@ -324,6 +351,7 @@ def write_template(
             header_height=header_height,
             hide_columns=hide_columns,
             column_widths=(column_widths or {}).get(table_props['table']),
+            format_columns=(column_formats or {}).get(table_props['table']),
         )
 
     # ---- Write enums

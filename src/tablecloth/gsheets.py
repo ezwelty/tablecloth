@@ -117,6 +117,7 @@ def write_table(
     comment_header: List[str] | None = None,
     hide_columns: bool = False,
     column_widths: List[int | float | None] | None = None,
+    format_columns: List[dict | None] | None = None,
 ) -> None:
     """
     Write an empty table (with header) to a Google Sheets sheet.
@@ -143,6 +144,10 @@ def write_table(
         Default is the minimum width to fit the header plus 10 pixels padding,
         and no less than 70 pixels.
         See :func:`calculate_minimum_cell_width` as a starting point for customization.
+    format_columns
+        Format to apply to all cells in a column
+        (including the header row unless `format_header` is provided). See
+        https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/cells#cellformat
     """
     ncols = len(header)
     header_range = pygsheets.DataRange((1, 1), (1, ncols), sheet)
@@ -151,6 +156,16 @@ def write_table(
         header_range.fetch()
     with batched(sheet.client):
         header_range.update_values([header])
+        if format_columns:
+            for i, column_format in enumerate(format_columns, start=1):
+                if column_format:
+                    # NOTE: pygsheets does not support one-sided ranges like A2:A
+                    pygsheets.DataRange((None, i), (None, i), sheet).apply_format(
+                        cell=None,
+                        fields='userEnteredFormat',
+                        cell_json={'userEnteredFormat': column_format},
+                    )
+        # Format header after columns so that it takes precedence
         if format_header:
             header_range.apply_format(
                 cell=None,
@@ -253,6 +268,7 @@ def write_template(
     freeze_header: bool = True,
     hide_columns: bool = False,
     column_widths: Dict[str, List[int | float | None]] | None = None,
+    format_columns: Dict[str, List[dict | None]] | None = None,
 ) -> None:
     """
     Write a template for data entry to a Google Sheets workbook.
@@ -309,6 +325,11 @@ def write_template(
         Default is the minimum width to fit the header plus 10 pixels padding,
         and no less than 70 pixels.
         See :func:`calculate_minimum_cell_width` as a starting point for customization
+    format_columns
+        For each table (with `resource.name` as dictionary key),
+        the cell format of each column
+        (including the header row unless `format_header` is provided). See
+        https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/cells#cellformat.
     """
     # ---- Initialize
     layout = Layout.from_package(
@@ -330,6 +351,7 @@ def write_template(
             freeze_header=freeze_header,
             hide_columns=hide_columns,
             column_widths=(column_widths or {}).get(table_props['table']),
+            format_columns=(format_columns or {}).get(table_props['table']),
         )
 
     # --- Write enums
