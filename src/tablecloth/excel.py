@@ -302,8 +302,12 @@ def write_template(
     # Register formats
     if format_invalid:
         invalid_format = book.add_format(format_invalid)
+    else:
+        invalid_format = None
     if format_header:
         header_format = book.add_format(format_header)
+    else:
+        header_format = None
 
     # ---- Write tables
     for table_props in layout.tables:
