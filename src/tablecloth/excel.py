@@ -166,7 +166,7 @@ def write_table(
         See :func:`calculate_minimum_cell_width` as a starting point for customization.
     """
     # Write header
-    sheet.write_row(0, 0, header, format_header)
+    sheet.write_row(0, 0, data=header, cell_format=format_header)
     # Set header height
     if header_height is not None:
         if header_height == 15:
@@ -196,7 +196,9 @@ def write_table(
             )
         sheet.set_column(i, i, width=width)
         if comment_header and comment_header[i]:
-            sheet.write_comment(0, i, comment_header[i], format_comments)
+            sheet.write_comment(
+                0, i, comment=comment_header[i], options=format_comments
+            )
 
 
 def write_enum(sheet: xlsxwriter.worksheet.Worksheet, values: list, col: int) -> None:
