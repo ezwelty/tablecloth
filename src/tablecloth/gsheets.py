@@ -131,7 +131,7 @@ def write_table(
         Whether to freeze the header.
     format_header
         Format to apply to header cells. See
-        https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/cells?hl=en#cellformat
+        https://developers.google.com/sheets/api/reference/rest/v4/spreadsheets/cells#cellformat
     header_height
         Header row height in pixels (default adjusts to content).
     comment_header
